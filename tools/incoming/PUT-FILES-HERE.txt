@@ -1,0 +1,7 @@
+Drop pictures and clips into this folder, then double-click
+optimise-images.cmd in the folder above.
+
+It shrinks everything, files it into assets/img or assets/gif, and prints
+the exact line to paste into assets/content.js.
+
+Your originals are moved into an _originals folder here, so nothing is lost.
