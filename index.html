@@ -1,0 +1,2839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ming Yang, Applied Computing &amp; Fintech</title>
+<meta name="description" content="Ming Yang finds what other people miss. Defect inspection at Micron, traffic forecasting, neural networks and databases. Applied Computing and Fintech at the Singapore Institute of Technology.">
+<meta name="theme-color" content="#0A0D13">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230A0D13'/%3E%3Cg fill='none' stroke='%237FB2DE' stroke-width='1.6'%3E%3Cpath d='M4 4h6M4 4v6M28 4h-6M28 4v6M4 28h6M4 28v-6M28 28h-6M28 28v-6'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23FF4F3F'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ming Yang, Applied Computing &amp; Fintech">
+<meta property="og:description" content="I find what other people miss. Defect inspection, forecasting, and the systems that make problems visible.">
+<!-- If you move to a custom domain, change the two absolute URLs below to match. -->
+<meta property="og:image" content="https://myc208.github.io/portfolio/assets/hero-ending.jpg">
+<meta property="og:url" content="https://myc208.github.io/portfolio/">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Decide the motion mode before first paint, so there is never a flash of the
+   wrong one. Motion is ON for everyone by default. The only thing that turns
+   it off is the visitor choosing so, with the switch in the footer. */
+(function(){
+  var pref=null;
+  try{ pref=localStorage.getItem('motion') }catch(e){}
+  document.documentElement.setAttribute('data-motion', pref==='off'?'off':'on');
+  document.documentElement.setAttribute('data-motion-pref', pref||'auto');
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --canvas:#0A0D13;
+  --canvas-2:#0D1119;
+  --panel:#131826;
+  --panel-2:#1A2132;
+  --line:#232B3D;
+  --line-strong:#5A6880;
+  --accent:#FF4F3F;
+  --accent-hover:#FF6E60;
+  --accent-muted:rgba(255,79,63,.16);
+  --trace:#7FB2DE;
+  --trace-muted:rgba(127,178,222,.14);
+  --text-primary:#E9EDF4;
+  --text-secondary:#93A0B6;
+  --text-on-footage:#B8C4D4;
+
+  --display:'Space Grotesk',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+
+  --tshadow:0 1px 2px rgba(5,5,10,.98),0 2px 8px rgba(5,5,10,.92),0 4px 18px rgba(5,5,10,.85),0 12px 48px rgba(5,5,10,.8);
+
+  --gut:clamp(20px,5vw,72px);
+  --maxw:1240px;
+}
+
+/* ============================================================
+   RESET / BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{overflow-x:hidden;overflow-x:clip}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--canvas);color:var(--text-primary);
+  font-family:var(--body);font-weight:400;font-size:clamp(15px,1.05vw,17px);
+  line-height:1.65;-webkit-font-smoothing:antialiased;
+  opacity:0;animation:pagein .9s var(--ease-out) .05s forwards;
+}
+@keyframes pagein{to{opacity:1}}
+img,video,svg{max-width:100%;display:block}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;line-height:1.06;letter-spacing:-.022em;margin:0}
+p{margin:0}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+::selection{background:var(--accent);color:#0A0D13}
+
+.wrap{width:100%;max-width:var(--maxw);margin-inline:auto;padding-inline:var(--gut)}
+.mono{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
+.skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--accent);color:#0A0D13;padding:12px 20px;font-family:var(--mono);font-size:.78rem}
+.skip:focus{left:12px;top:12px}
+
+/* ============================================================
+   FIXED BACKGROUND ENVIRONMENT (one place, behind everything)
+   ============================================================ */
+.env{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:
+  radial-gradient(ellipse 90% 60% at 50% -10%,rgba(127,178,222,.07),transparent 70%),
+  radial-gradient(ellipse 70% 50% at 90% 105%,rgba(255,79,63,.05),transparent 70%),
+  var(--canvas)}
+.gl-field{position:absolute;inset:0;width:100%;height:100%;display:block;
+  opacity:0;transition:opacity 1.6s var(--ease)}
+.gl-field.on{opacity:1}
+/* the drawn grid steps back once the live field is carrying the depth */
+.env-grid{position:absolute;inset:-10%;opacity:.3;
+  background-image:linear-gradient(var(--trace-muted) 1px,transparent 1px),linear-gradient(90deg,var(--trace-muted) 1px,transparent 1px);
+  background-size:74px 74px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 10%,transparent 78%);
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 40%,#000 10%,transparent 78%);
+  animation:envdrift 96s linear infinite;animation-delay:-31s}
+@keyframes envdrift{to{transform:translate3d(74px,74px,0)}}
+.env-glow{position:absolute;left:50%;top:38%;width:min(120vw,1500px);aspect-ratio:1;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(127,178,222,.075),transparent 62%);
+  animation:envpulse 108s ease-in-out infinite;animation-delay:-40s}
+@keyframes envpulse{0%,100%{opacity:.55;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}}
+.mote{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--trace);opacity:.4;
+  animation:motedrift linear infinite}
+@keyframes motedrift{0%{transform:translate3d(0,0,0);opacity:0}12%{opacity:.5}88%{opacity:.5}100%{transform:translate3d(var(--mx,30px),var(--my,-140px),0);opacity:0}}
+
+/* ============================================================
+   THE RETICLE (the signature element)
+   ============================================================ */
+.ret{position:absolute;inset:0;pointer-events:none;color:var(--trace);z-index:3}
+.ret span{position:absolute;width:11px;height:11px;opacity:0;
+  border:1px solid currentColor;
+  transition:opacity .34s var(--ease),transform .5s var(--ease-out)}
+.ret span:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;transform:translate(-7px,-7px)}
+.ret span:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;transform:translate(7px,-7px)}
+.ret span:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;transform:translate(-7px,7px)}
+.ret span:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;transform:translate(7px,7px)}
+.ret-on span{opacity:.85;transform:translate(0,0)}
+.ret-on span:nth-child(1){transition-delay:0ms}
+.ret-on span:nth-child(2){transition-delay:40ms}
+.ret-on span:nth-child(3){transition-delay:80ms}
+.ret-on span:nth-child(4){transition-delay:120ms}
+.ret-red{color:var(--accent)}
+
+/* ============================================================
+   NAV
+   ============================================================ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:90;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding:14px var(--gut);
+  transition:background .5s var(--ease),border-color .5s var(--ease),backdrop-filter .5s var(--ease);
+  border-bottom:1px solid transparent}
+/* Over the hero the nav sits directly on live footage, and the top right of
+   the board is the brightest thing in the shot. A soft top-down gradient keeps
+   the links readable there, and retires once the solid bar takes over. */
+.nav::before{content:"";position:absolute;inset:0 0 -30px 0;pointer-events:none;z-index:-1;
+  background:linear-gradient(180deg,rgba(6,8,13,.86) 0%,rgba(6,8,13,.62) 48%,rgba(6,8,13,0) 100%);
+  transition:opacity .5s var(--ease)}
+.nav.solid::before{opacity:0}
+.nav-name,.nav-links a{text-shadow:0 1px 3px rgba(5,5,10,.8),0 2px 12px rgba(5,5,10,.6)}
+.nav.solid .nav-name,.nav.solid .nav-links a{text-shadow:none}
+.nav.solid{background:rgba(10,13,19,.82);backdrop-filter:blur(14px);border-bottom-color:var(--line)}
+.nav-name{font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 0 var(--accent-muted);animation:navpulse 4.5s var(--ease) infinite;animation-delay:-1.2s}
+@keyframes navpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,79,63,.35)}50%{box-shadow:0 0 0 7px rgba(255,79,63,0)}}
+.nav-links{display:flex;align-items:center;gap:clamp(14px,2.2vw,30px)}
+.nav-links a{font-family:var(--mono);font-size:.71rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-on-footage);position:relative;padding:6px 0;transition:color .32s var(--ease)}
+/* over the footage the links run brighter; once the solid bar is under them
+   they drop back to the page's normal secondary */
+.nav.solid .nav-links a{color:var(--text-secondary)}
+.nav.solid .nav-links a:hover{color:var(--text-primary)}
+.nav-links a::after{content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;background:var(--accent);transition:right .42s var(--ease-out)}
+.nav-links a:hover{color:var(--text-primary)}
+.nav-links a:hover::after{right:0}
+.motion-toggle{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:2px;
+  border:1px solid var(--line);background:none;cursor:pointer;
+  font-family:var(--mono);font-size:.63rem;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--text-secondary);white-space:nowrap;
+  transition:border-color .32s var(--ease),color .32s var(--ease),background .32s var(--ease)}
+.motion-toggle:hover{border-color:var(--trace);background:rgba(127,178,222,.09);color:var(--text-primary)}
+.motion-dot{width:7px;height:7px;border-radius:50%;flex:none;background:var(--line-strong);
+  transition:background .32s var(--ease),box-shadow .32s var(--ease)}
+html[data-motion="on"] .motion-dot{background:var(--trace);box-shadow:0 0 8px 1px rgba(127,178,222,.6)}
+.motion-toggle .off-label{display:none}
+html[data-motion="off"] .motion-toggle .on-label{display:none}
+html[data-motion="off"] .motion-toggle .off-label{display:inline}
+@media (pointer:coarse){.motion-toggle{min-height:44px}}
+
+.nav-cta{border:1px solid var(--line-strong);padding:9px 17px !important;border-radius:2px;color:var(--text-primary) !important;transition:border-color .32s var(--ease),background .32s var(--ease)}
+.nav-cta::after{display:none}
+.nav-cta:hover{border-color:var(--accent);background:var(--accent-muted)}
+@media (max-width:640px){.nav-links a:not(.nav-cta){display:none}}
+
+/* ============================================================
+   HERO / SCRUB STAGE
+   ============================================================ */
+.hero{position:relative;height:560vh;z-index:1}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:var(--canvas)}
+
+/* the designed board backdrop: always present, so the page is complete
+   with no poster and no video at all */
+.board{position:absolute;inset:0;overflow:hidden;
+  background:radial-gradient(ellipse 100% 80% at 62% 42%,#141C2B 0%,#0B0F17 58%,#070A0F 100%)}
+.board-grid{position:absolute;inset:-20%;
+  background-image:linear-gradient(rgba(127,178,222,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(127,178,222,.16) 1px,transparent 1px);
+  background-size:58px 58px;transform:perspective(700px) rotateX(58deg) translateY(6%);transform-origin:50% 40%;
+  -webkit-mask-image:radial-gradient(ellipse 70% 62% at 55% 45%,#000 5%,transparent 72%);
+  mask-image:radial-gradient(ellipse 70% 62% at 55% 45%,#000 5%,transparent 72%)}
+.board-glow{position:absolute;left:64%;top:44%;width:min(80vw,860px);aspect-ratio:1;transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(127,178,222,.15),transparent 60%)}
+.board-flag{position:absolute;left:71%;top:47%;width:9px;height:9px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 20px 5px rgba(255,79,63,.42);animation:flagpulse 5.5s var(--ease) infinite;animation-delay:-1.8s}
+@keyframes flagpulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.35)}}
+
+.poster{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .8s var(--ease)}
+.stage.poster-ready .poster{opacity:1}
+#hero{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  will-change:transform;transform:scale(var(--push,1));transition:opacity .7s var(--ease)}
+/* The brightness lift used to live here as a CSS filter. It is baked into the
+   file now: a filter on a video costs a pass on every seek, and this video is
+   seeked on every scroll event. */
+.poster{will-change:transform;transform:scale(var(--push,1))}
+.stage.video-ready #hero{opacity:1}
+.stage.video-failed #hero{display:none}
+
+.scrim{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 135% 105% at 60% 45%,rgba(10,10,18,0) 52%,rgba(10,10,18,.34) 100%)}
+
+/* loading ring */
+.ring-wrap{position:absolute;left:50%;bottom:38px;transform:translateX(-50%);z-index:6;color:var(--trace);
+  display:flex;align-items:center;gap:11px;transition:opacity .5s var(--ease)}
+.stage.video-ready .ring-wrap{opacity:0;pointer-events:none;visibility:hidden}
+/* the ring sat where the scroll cue now lives, so it steps aside cleanly */
+.stage.cue-on .ring-wrap{opacity:0;visibility:hidden}
+.ring{width:34px;height:34px;transform:rotate(-90deg)}
+.ring-label{font-family:var(--mono);font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-secondary)}
+.chev{width:20px;height:32px;border:1px solid var(--line-strong);border-radius:11px;position:relative}
+.chev::after{content:"";position:absolute;left:50%;top:8px;width:2px;height:6px;border-radius:2px;background:var(--trace);
+  transform:translateX(-50%);animation:chevdrop 2.4s var(--ease) infinite}
+@keyframes chevdrop{0%{opacity:0;transform:translate(-50%,-4px)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+
+/* ---------- caption bands ---------- */
+.bands{position:absolute;inset:0;z-index:5}
+.band{position:absolute;inset:0;opacity:0;display:flex;align-items:center;
+  padding-inline:var(--gut);text-shadow:var(--tshadow);pointer-events:none}
+.band::before{content:"";position:absolute;inset:-4%;pointer-events:none;
+  opacity:calc(.25 + .75*var(--k,1));
+  background:linear-gradient(96deg,rgba(5,5,10,.74) 0%,rgba(5,5,10,.70) 44%,rgba(5,5,10,.58) 57%,rgba(5,5,10,.26) 67%,rgba(5,5,10,0) 79%)}
+.band-inner{position:relative;width:100%;max-width:var(--maxw);margin-inline:auto}
+.band-col{max-width:min(680px,60%)}
+.band .kick{display:inline-block;color:var(--trace);margin-bottom:20px;opacity:.9}
+.band h1,.band h2{font-size:clamp(2rem,5.1vw,4.35rem);letter-spacing:-.03em}
+.band .sub{margin-top:22px;color:var(--text-on-footage);font-size:clamp(.95rem,1.18vw,1.1rem);max-width:52ch;line-height:1.6}
+.band .btn{text-shadow:none}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Tuned against the delivered footage by the worst-frame audit, not by eye.
+   Band 1 opens over the brightest part of the board, band 4 rests over the lit
+   lattice, so both carry a deeper scrim than the two beats between them. */
+#band1::before{background:linear-gradient(96deg,rgba(5,5,10,.76) 0%,rgba(5,5,10,.72) 44%,rgba(5,5,10,.60) 57%,rgba(5,5,10,.28) 67%,rgba(5,5,10,0) 79%)}
+/* band 4 uses a centred-upper scrim because the settle text converges */
+#band4::before{background:linear-gradient(96deg,rgba(5,5,10,.78) 0%,rgba(5,5,10,.74) 46%,rgba(5,5,10,.62) 58%,rgba(5,5,10,.28) 68%,rgba(5,5,10,0) 80%)}
+
+/* ---------- text entrances (transform + opacity only) ---------- */
+.w{display:inline-block;white-space:pre}
+.c{display:inline-block;will-change:transform,opacity}
+
+/* (a) drift-down, band 1 */
+.e-drift .w{--kc:clamp(0,(var(--k,0) - var(--th,0))*2.8,1);opacity:var(--kc);
+  transform:translateY(calc((1 - var(--kc))*-26px))}
+/* (b) grid snap-align, band 2 */
+.e-grid .c{--kc:clamp(0,(var(--k,0) - var(--th,0))*2.6,1);opacity:var(--kc);
+  transform:translateX(calc((1 - var(--kc))*var(--jx,0px)))}
+/* (c) blur-to-sharp, band 3 */
+.e-blur{position:relative}
+.e-blur .soft{position:absolute;inset:0;filter:blur(11px);opacity:calc(1 - var(--k,0));pointer-events:none}
+.e-blur .sharp{opacity:var(--k,0)}
+/* (e) staged settle, band 4 */
+.e-settle .w{--kc:clamp(0,(var(--k,0) - var(--th,0))*3,1);opacity:var(--kc);
+  transform:translateY(calc((1 - var(--kc))*30px))}
+.e-settle .sub{--ks:clamp(0,(var(--k,0) - .66)*4,1);opacity:var(--ks);
+  transform:translateY(calc((1 - var(--ks))*16px))}
+.e-settle .cta-row{--kb:clamp(0,(var(--k,0) - .78)*5,1);opacity:var(--kb);
+  transform:translateY(calc((1 - var(--kb))*16px))}
+
+/* ---------- buttons ---------- */
+.cta-row{display:flex;flex-wrap:wrap;gap:13px;margin-top:34px}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  padding:15px 26px;border-radius:2px;border:1px solid var(--line-strong);color:var(--text-primary);
+  transition:border-color .34s var(--ease),background .34s var(--ease),color .34s var(--ease),transform .34s var(--ease-out)}
+.btn{--mx:0px;--my:0px}
+.btn:hover{transform:translate(var(--mx),calc(var(--my) - 2px))}
+.btn.magnetic{transition:transform .14s linear,border-color .34s var(--ease),background .34s var(--ease),color .34s var(--ease)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0A0D13}
+.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn-ghost:hover{border-color:var(--trace);background:rgba(127,178,222,.09)}
+.btn .arw{transition:transform .34s var(--ease-out)}
+.btn:hover .arw{transform:translateX(4px)}
+@media (pointer:coarse){.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
+
+/* ============================================================
+   STATIC HERO (phones, portrait tablets, reduced motion)
+   ============================================================ */
+.static-hero{display:none;position:relative;min-height:100svh;z-index:1;
+  align-items:flex-end;padding:120px var(--gut) clamp(56px,9vh,90px);overflow:hidden}
+.static-hero .board{position:absolute;inset:0}
+.static-hero .sh-img{position:absolute;inset:0;background-size:cover;background-position:60% 50%;opacity:0;transition:opacity .8s var(--ease)}
+.static-hero.img-ready .sh-img{opacity:1}
+.static-hero .scrim{background:linear-gradient(180deg,rgba(10,13,19,.78) 0%,rgba(10,13,19,.35) 34%,rgba(10,13,19,.88) 100%)}
+.sh-inner{position:relative;z-index:3;width:100%;max-width:var(--maxw);margin-inline:auto;text-shadow:var(--tshadow)}
+.sh-inner .kick{display:block;color:var(--trace);margin-bottom:18px}
+.sh-inner h1{font-size:clamp(2.1rem,8.4vw,3.5rem);letter-spacing:-.03em;max-width:16ch}
+.sh-inner .sub{margin-top:20px;color:var(--text-on-footage);max-width:44ch;font-size:.98rem}
+.sh-inner .btn{text-shadow:none}
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+main{position:relative;z-index:2}
+/* Every section carries its own translucent ground. The live lattice reads
+   through it as atmosphere, but never competes with a line of text. Measured,
+   not guessed: without this the FAQ headings dropped to 1.15:1. */
+.sec{position:relative;padding:clamp(88px,13vh,150px) 0;border-top:1px solid var(--line);
+  background:rgba(10,13,19,.88)}
+.sec-alt{background:rgba(14,18,27,.92)}
+.sec-head{position:relative;margin-bottom:clamp(40px,6vh,68px)}
+.sec-head .kick{display:block;color:var(--trace);margin-bottom:16px}
+.sec-head h2{font-size:clamp(1.75rem,3.9vw,3rem)}
+.sec-head .lede{margin-top:20px;color:var(--text-secondary);max-width:58ch;font-size:1.02rem}
+
+/* entrance choreography */
+.rise{opacity:0;transform:translateY(22px);
+  transition:opacity .82s var(--ease-out),transform .82s var(--ease-out)}
+.in .rise,.rise.in{opacity:1;transform:none}
+.stagger>*{opacity:0;transform:translateY(20px);
+  transition:opacity .78s var(--ease-out),transform .78s var(--ease-out)}
+.stagger.in>*{opacity:1;transform:none}
+.stagger.in>*:nth-child(1){transition-delay:0ms}
+.stagger.in>*:nth-child(2){transition-delay:80ms}
+.stagger.in>*:nth-child(3){transition-delay:160ms}
+.stagger.in>*:nth-child(4){transition-delay:240ms}
+.stagger.in>*:nth-child(5){transition-delay:320ms}
+.stagger.in>*:nth-child(6){transition-delay:400ms}
+/* retire the stagger so later hovers are not delayed forever.
+   selector repeats nth-child so it beats the delay rules on specificity */
+.stagger.done>*:nth-child(1),.stagger.done>*:nth-child(2),.stagger.done>*:nth-child(3),
+.stagger.done>*:nth-child(4),.stagger.done>*:nth-child(5),.stagger.done>*:nth-child(6),
+.stagger.done>*{transition-delay:0s !important}
+
+/* ---------- 01 proof strip ---------- */
+.proof{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.proof-cell{position:relative;background:var(--canvas);padding:clamp(24px,3.2vw,38px) clamp(18px,2.4vw,30px);
+  transition:background .45s var(--ease)}
+.proof-cell:hover{background:var(--panel)}
+.proof-num{font-family:var(--display);font-weight:700;font-size:clamp(1.9rem,4.1vw,3.15rem);letter-spacing:-.04em;line-height:1}
+.proof-num.is-accent{color:var(--accent)}
+.proof-lbl{margin-top:14px;color:var(--text-secondary);font-size:.9rem;line-height:1.5}
+.proof-org{margin-top:12px;color:var(--trace);opacity:.8}
+.proof-note{margin-top:26px;color:var(--text-secondary);font-family:var(--mono);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:900px){.proof{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.proof{grid-template-columns:1fr}}
+
+/* ---------- 02 about ---------- */
+.about{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:clamp(32px,5vw,74px);align-items:start}
+.portrait{position:relative;aspect-ratio:4/5;background:var(--panel);border:1px solid var(--line);overflow:hidden}
+.portrait img{width:100%;height:100%;object-fit:cover;
+  filter:saturate(.92) contrast(1.03);transition:filter .6s var(--ease),transform .8s var(--ease-out)}
+.portrait:hover img{filter:saturate(1) contrast(1.05);transform:scale(1.02)}
+.portrait::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,13,19,.14) 0%,transparent 34%,rgba(10,13,19,.42) 100%)}
+.portrait-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  color:var(--text-secondary);text-align:center;padding:26px;
+  background:repeating-linear-gradient(135deg,transparent 0 11px,rgba(127,178,222,.05) 11px 22px)}
+.portrait-ph .mono{color:var(--trace)}
+.about-body p+p{margin-top:20px}
+.about-body .lede-big{font-family:var(--display);font-weight:500;font-size:clamp(1.15rem,1.9vw,1.5rem);line-height:1.42;letter-spacing:-.015em;color:var(--text-primary)}
+.about-body p{color:var(--text-secondary);max-width:64ch}
+.about-actions{display:flex;flex-wrap:wrap;gap:13px;margin-top:34px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:32px}
+.tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:7px 12px;border:1px solid var(--line);color:var(--text-secondary);border-radius:2px;
+  transition:border-color .34s var(--ease),color .34s var(--ease)}
+.tag:hover{border-color:var(--trace);color:var(--text-primary)}
+@media (max-width:820px){.about{grid-template-columns:1fr}.portrait{max-width:340px}}
+
+/* ---------- 03 experience rail ---------- */
+.rail{position:relative;padding-left:clamp(38px,6vw,86px)}
+.rail-svg{position:absolute;left:0;top:0;height:100%;width:clamp(30px,5vw,70px);overflow:visible}
+.rail-svg path{fill:none;stroke:var(--trace);stroke-width:1.25;opacity:.55;
+  stroke-dasharray:var(--len,1000);stroke-dashoffset:calc(var(--len,1000) * (1 - var(--draw,0)))}
+.rail-svg circle{fill:var(--canvas);stroke:var(--trace);stroke-width:1.25;opacity:var(--dot,0);transition:opacity .5s var(--ease)}
+
+/* ---------- 03 experience: one standard card, detail behind a click ---------- */
+.job{position:relative;padding:0;border-bottom:1px solid var(--line);display:block}
+.job:last-child{border-bottom:0}
+
+.job-head{width:100%;display:grid;grid-template-columns:minmax(0,178px) minmax(0,1fr) auto;
+  gap:clamp(18px,3vw,44px);align-items:start;text-align:left;
+  padding:clamp(26px,3.4vw,38px) 0;background:none;border:0;cursor:pointer;
+  transition:opacity .4s var(--ease)}
+.job-head:hover{opacity:1}
+.job-when{color:var(--trace);padding-top:6px;white-space:nowrap;font-size:.68rem}
+.job-logo{height:28px;width:auto;max-width:142px;object-fit:contain;object-position:left center;
+  margin-bottom:15px;opacity:.9;transition:opacity .4s var(--ease)}
+.job-head:hover .job-logo{opacity:1}
+.job-logo.sq{height:48px}
+.job h3{font-size:clamp(1.12rem,1.9vw,1.42rem);letter-spacing:-.02em;
+  transition:color .34s var(--ease)}
+.job-head:hover h3{color:var(--trace)}
+.job-org{margin-top:7px;color:var(--accent);font-family:var(--mono);font-size:.76rem;
+  letter-spacing:.1em;text-transform:uppercase}
+.job-summary{margin-top:16px;color:var(--text-secondary);max-width:60ch}
+.job-win{margin-top:16px;display:flex;gap:11px;align-items:flex-start;max-width:60ch}
+.job-win::before{content:"";flex:none;width:11px;height:11px;margin-top:.42em;border-radius:50%;
+  border:1px solid var(--accent);background:var(--accent-muted)}
+.job-win span{color:var(--text-primary);font-size:.93rem;line-height:1.55}
+.job-lead .job-org::after{content:"Most recent";margin-left:12px;padding:3px 8px;
+  border:1px solid var(--accent);color:var(--accent);border-radius:2px;
+  font-size:.62rem;letter-spacing:.1em;white-space:nowrap}
+
+/* the open/close control, an instrument dial rather than a chevron */
+.job-toggle{flex:none;width:46px;height:46px;border:1px solid var(--line-strong);border-radius:50%;
+  position:relative;margin-top:4px;color:var(--text-secondary);
+  transition:border-color .38s var(--ease),color .38s var(--ease),background .38s var(--ease),
+             transform .55s var(--ease-out)}
+.job-head:hover .job-toggle{border-color:var(--accent);color:var(--text-primary);background:var(--accent-muted)}
+.job-toggle::before,.job-toggle::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;
+  transform:translate(-50%,-50%);transition:transform .5s var(--ease-out),opacity .4s var(--ease)}
+.job-toggle::before{width:13px;height:1px}
+.job-toggle::after{width:1px;height:13px}
+.job[data-open="1"] .job-toggle{border-color:var(--accent);color:var(--accent);transform:rotate(135deg)}
+.job[data-open="1"] .job-toggle::after{opacity:0}
+@media (max-width:700px){
+  .job-head{grid-template-columns:1fr;gap:12px}
+  .job-toggle{position:absolute;top:24px;right:0;margin-top:0}
+}
+
+/* ---------- the detail, and the way it arrives ---------- */
+/* height:0 hides a panel visually but leaves everything inside it in the tab
+   order, so a keyboard user lands on buttons they cannot see. visibility takes
+   it out of the tree, delayed so it does not cut the closing animation short. */
+.job-detail{height:0;overflow:hidden;visibility:hidden;
+  transition:height .62s var(--ease-out),visibility 0s linear .62s}
+.job[data-open="1"] .job-detail{visibility:visible;
+  transition:height .62s var(--ease-out),visibility 0s linear 0s}
+.job-detail-in{padding:2px 0 clamp(30px,4vw,46px);
+  display:grid;grid-template-columns:minmax(0,178px) minmax(0,1fr);gap:clamp(18px,3vw,44px)}
+.job-detail-rail{position:relative}
+/* a line that draws itself down the gutter as the detail opens */
+.job-detail-rail::before{content:"";position:absolute;left:0;top:0;width:1px;bottom:0;
+  background:linear-gradient(180deg,var(--accent),var(--trace) 40%,transparent);
+  transform:scaleY(0);transform-origin:top;
+  transition:transform .8s var(--ease-out) .1s}
+.job[data-open="1"] .job-detail-rail::before{transform:scaleY(1)}
+.job-detail-body>*{opacity:0;transform:translateY(14px);
+  transition:opacity .5s var(--ease-out),transform .5s var(--ease-out)}
+.job[data-open="1"] .job-detail-body>*{opacity:1;transform:none}
+.job[data-open="1"] .job-detail-body>*:nth-child(1){transition-delay:.10s}
+.job[data-open="1"] .job-detail-body>*:nth-child(2){transition-delay:.16s}
+.job[data-open="1"] .job-detail-body>*:nth-child(3){transition-delay:.22s}
+.job[data-open="1"] .job-detail-body>*:nth-child(4){transition-delay:.28s}
+.job[data-open="1"] .job-detail-body>*:nth-child(5){transition-delay:.34s}
+.job[data-open="1"] .job-detail-body>*:nth-child(6){transition-delay:.40s}
+/* retire the delays once open, so nothing inside lags on hover afterwards */
+.job.settled .job-detail-body>*:nth-child(1),.job.settled .job-detail-body>*:nth-child(2),
+.job.settled .job-detail-body>*:nth-child(3),.job.settled .job-detail-body>*:nth-child(4),
+.job.settled .job-detail-body>*:nth-child(5),.job.settled .job-detail-body>*:nth-child(6),
+.job.settled .job-detail-body>*{transition-delay:0s !important}
+
+.job-detail-body p{color:var(--text-secondary);max-width:64ch}
+.job-detail-body p+p{margin-top:16px}
+.job-detail-body .job-list{margin-top:24px}
+.job-list{margin:0;padding:0;list-style:none;display:grid;gap:13px;max-width:66ch}
+.job-list li{position:relative;padding-left:23px;color:var(--text-secondary);font-size:.94rem;line-height:1.6}
+.job-list li::before{content:"";position:absolute;left:0;top:.66em;width:10px;height:1px;background:var(--accent)}
+.job-list b{color:var(--text-primary);font-weight:500;font-family:var(--display)}
+.job-stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.job-quote{margin:26px 0 0;padding:20px 24px;border-left:2px solid var(--accent);
+  background:var(--accent-muted);max-width:62ch}
+.job-quote p{color:var(--text-primary);font-family:var(--display);font-weight:500;
+  font-size:1.02rem;line-height:1.5;letter-spacing:-.012em;max-width:none}
+.job-quote cite{display:block;margin-top:12px;font-style:normal;color:var(--trace);
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:700px){
+  .job-detail-in{grid-template-columns:1fr}
+  .job-detail-rail{display:none}
+}
+
+/* ---------- 04 what they said ---------- */
+.quotes{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(16px,2.4vw,26px);align-items:stretch}
+.quote{position:relative;margin:0;padding:clamp(28px,3.6vw,44px);border:1px solid var(--line);background:var(--panel);
+  display:flex;flex-direction:column;transition:border-color .45s var(--ease),background .45s var(--ease)}
+.quote:hover{border-color:var(--line-strong)}
+.quote-mark{position:absolute;top:clamp(8px,1.4vw,16px);right:clamp(18px,2.4vw,30px);
+  font-family:var(--display);font-weight:700;font-size:clamp(4rem,7vw,6rem);line-height:1;
+  color:var(--accent);opacity:.16;pointer-events:none}
+.quote blockquote{margin:0;flex:1;padding-right:clamp(28px,4vw,58px)}
+.quote blockquote p{color:var(--text-primary);font-family:var(--display);font-weight:500;
+  font-size:clamp(1rem,1.5vw,1.16rem);line-height:1.52;letter-spacing:-.012em;max-width:44ch}
+.quote blockquote p+p{margin-top:18px;color:var(--text-secondary);font-family:var(--body);font-weight:400;
+  font-size:.95rem;line-height:1.62;letter-spacing:0}
+.quote figcaption{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;gap:7px}
+.quote-who{font-family:var(--display);font-weight:700;font-size:1rem;letter-spacing:-.015em}
+.quote-role{color:var(--trace);opacity:.9}
+/* the slot held for the DBS testimonial: designed as reserved, not as missing */
+.quote-pending{background:transparent;
+  border:1px dashed var(--line-strong);
+  background-image:repeating-linear-gradient(135deg,transparent 0 12px,rgba(127,178,222,.035) 12px 24px)}
+.quote-pending .quote-mark{color:var(--trace);opacity:.12}
+.quote-pending .pending-note{color:var(--text-secondary);font-family:var(--body);font-weight:400;
+  font-size:.98rem;line-height:1.6;font-style:italic}
+.quote-pending figcaption{border-top-style:dashed}
+.quote-pending .quote-who{color:var(--text-secondary)}
+@media (max-width:820px){.quotes{grid-template-columns:1fr}}
+
+/* ---------- 05 the inspection (interactive moment) ---------- */
+.insp{position:relative;border:1px solid var(--line);background:
+  radial-gradient(ellipse 80% 70% at 50% 30%,#101725 0%,#0A0E16 70%);
+  padding:clamp(28px,4vw,52px);overflow:hidden}
+.insp-field{position:relative;width:100%;aspect-ratio:16/7;min-height:210px;
+  border:1px solid var(--line);background:rgba(10,13,19,.5);overflow:hidden}
+.insp-field svg{position:absolute;inset:0;width:100%;height:100%}
+.pt{fill:var(--line-strong);transition:fill .3s var(--ease),r .3s var(--ease)}
+.pt.bad{fill:var(--accent)}
+.pt-ring{fill:none;stroke:var(--accent);stroke-width:1.2;opacity:0;transform-box:fill-box;transform-origin:center}
+.pt-ring.on{opacity:.9;animation:ringpop .55s var(--ease-out)}
+@keyframes ringpop{0%{transform:scale(2.6);opacity:0}55%{opacity:1}100%{transform:scale(1);opacity:.9}}
+.scanline{position:absolute;left:0;right:0;top:0;height:100%;opacity:0;pointer-events:none;
+  transform:translateY(calc(var(--sp,0) * 100%));will-change:transform}
+.scanline::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--trace),transparent);
+  box-shadow:0 0 18px 3px rgba(127,178,222,.4)}
+.scanline::after{content:"";position:absolute;left:0;right:0;bottom:100%;height:64px;
+  background:linear-gradient(180deg,transparent,rgba(127,178,222,.10));pointer-events:none}
+.insp.armed .scanline{opacity:1}
+.insp-bar{margin-top:22px;display:flex;flex-wrap:wrap;align-items:center;gap:clamp(14px,2.4vw,28px)}
+.hold{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:11px;
+  font-family:var(--mono);font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  padding:16px 30px;border:1px solid var(--line-strong);border-radius:2px;overflow:hidden;
+  touch-action:none;-webkit-user-select:none;user-select:none;min-height:44px;
+  transition:border-color .34s var(--ease)}
+.hold:hover{border-color:var(--trace)}
+.hold::before{content:"";position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent-muted);
+  transform:scaleX(var(--sp,0));transform-origin:left;will-change:transform}
+.hold span{position:relative}
+.insp-count{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,3vw,2.1rem);letter-spacing:-.03em;color:var(--accent)}
+.insp-hint{color:var(--text-secondary);font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase}
+.insp-reveal{margin-top:30px;display:grid;gap:14px;border-top:1px solid var(--line);padding-top:28px}
+.insp-reveal p{opacity:0;transform:translateY(12px);color:var(--text-secondary);
+  transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+.insp-reveal p:first-child{color:var(--text-primary);font-family:var(--display);font-weight:500;
+  font-size:clamp(1.05rem,1.8vw,1.35rem);letter-spacing:-.015em}
+.insp.done .insp-reveal p{opacity:1;transform:none}
+.insp.done .insp-reveal p:nth-child(2){transition-delay:150ms}
+.insp.done .insp-reveal p:nth-child(3){transition-delay:300ms}
+
+/* ---------- 06 projects ---------- */
+.filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:34px}
+.filt{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:10px 16px;border:1px solid var(--line);color:var(--text-secondary);border-radius:2px;
+  transition:border-color .3s var(--ease),color .3s var(--ease),background .3s var(--ease)}
+.filt:hover{color:var(--text-primary);border-color:var(--line-strong)}
+.filt[aria-pressed="true"]{color:#0A0D13;background:var(--accent);border-color:var(--accent)}
+@media (pointer:coarse){.filt{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,310px),1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.card{position:relative;background:var(--canvas);display:flex;flex-direction:column;text-align:left;width:100%;
+  transition:background .42s var(--ease)}
+.card:hover{background:var(--panel)}
+.card[hidden]{display:none}
+.card-media{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--panel-2);border-bottom:1px solid var(--line)}
+.card-media img{width:100%;height:100%;object-fit:cover;opacity:.72;
+  transition:opacity .5s var(--ease),transform .7s var(--ease-out)}
+.card:hover .card-media img{opacity:1;transform:scale(1.035)}
+.card-body{padding:22px 24px 26px;flex:1;display:flex;flex-direction:column}
+.card-proves{color:var(--accent);font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;
+  text-transform:uppercase;margin-bottom:12px;line-height:1.45;min-height:2.9em}
+.card h3{font-size:1.02rem;letter-spacing:-.015em;line-height:1.28}
+.card-sum{margin-top:11px;color:var(--text-secondary);font-size:.9rem;line-height:1.55;flex:1}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.card-tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--text-secondary);
+  border:1px solid var(--line);padding:5px 8px;border-radius:2px}
+.card-open{margin-top:20px;display:flex;align-items:center;gap:9px;color:var(--trace);
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase}
+.card-open .arw{transition:transform .34s var(--ease-out)}
+.card:hover .card-open .arw{transform:translateX(4px)}
+
+/* the in-place detail panel */
+.detail{grid-column:1/-1;background:var(--canvas-2);overflow:hidden;
+  height:0;opacity:0;transition:height .62s var(--ease-out),opacity .4s var(--ease)}
+.detail.open{opacity:1}
+.detail-in{padding:clamp(28px,4vw,54px);border-top:1px solid var(--accent)}
+.detail-top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:20px}
+.detail h3{font-size:clamp(1.3rem,2.6vw,2rem);letter-spacing:-.025em;max-width:22ch}
+.detail-close{flex:none;border:1px solid var(--line-strong);border-radius:2px;padding:11px 16px;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;color:var(--text-secondary);
+  transition:border-color .3s var(--ease),color .3s var(--ease);min-height:44px}
+.detail-close:hover{border-color:var(--accent);color:var(--text-primary)}
+.detail-proves{margin-top:16px;padding:16px 20px;border-left:2px solid var(--accent);background:var(--accent-muted);
+  color:var(--text-primary);font-size:.95rem}
+.detail-body{margin-top:26px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:clamp(24px,4vw,50px);align-items:start}
+.detail-body p{color:var(--text-secondary);max-width:64ch}
+.detail-body p+p{margin-top:16px}
+.detail-list{margin:20px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.detail-list li{position:relative;padding-left:22px;color:var(--text-secondary);font-size:.94rem}
+.detail-list li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:1px;background:var(--accent)}
+.detail-list b{color:var(--text-primary);font-weight:500}
+.detail-shots{display:grid;gap:12px}
+.detail-shots figure{margin:0;border:1px solid var(--line);background:var(--panel);overflow:hidden}
+.detail-shots img,.detail-shots video{width:100%;display:block;background:var(--panel-2)}
+.detail-shots figcaption{padding:10px 14px;color:var(--text-secondary);font-family:var(--mono);font-size:.64rem;
+  letter-spacing:.1em;text-transform:uppercase;border-top:1px solid var(--line)}
+.detail-meta{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:820px){.detail-body{grid-template-columns:1fr}}
+
+/* ---------- 07 faq ---------- */
+.faq{border-top:1px solid var(--line)}
+.qa{border-bottom:1px solid var(--line)}
+.qa-q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:24px;
+  padding:clamp(20px,2.6vw,30px) 0;text-align:left;
+  font-family:var(--display);font-weight:500;font-size:clamp(1rem,1.7vw,1.24rem);letter-spacing:-.015em;
+  transition:color .3s var(--ease)}
+.qa-q:hover{color:var(--accent)}
+.qa-sign{flex:none;width:15px;height:15px;position:relative;color:var(--trace)}
+.qa-sign::before,.qa-sign::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;
+  transform:translate(-50%,-50%);transition:transform .42s var(--ease-out),opacity .42s var(--ease)}
+.qa-sign::before{width:15px;height:1px}
+.qa-sign::after{width:1px;height:15px}
+.qa[data-open="1"] .qa-sign{color:var(--accent)}
+.qa[data-open="1"] .qa-sign::after{transform:translate(-50%,-50%) rotate(90deg);opacity:0}
+.qa-a{height:0;overflow:hidden;transition:height .55s var(--ease-out)}
+.qa-a p{padding-bottom:clamp(22px,2.8vw,32px);color:var(--text-secondary);max-width:70ch}
+
+/* ---------- 08 contact ---------- */
+.contact{max-width:820px;margin-inline:auto;text-align:center}
+.contact .sec-head{text-align:center}
+.contact .sec-head .lede{margin-inline:auto}
+.form{margin-top:44px;display:grid;gap:18px;text-align:left}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.field label{display:block;font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--trace);margin-bottom:10px}
+.field input,.field textarea{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:2px;
+  color:var(--text-primary);font-family:var(--body);font-size:.97rem;padding:15px 17px;
+  transition:border-color .32s var(--ease),background .32s var(--ease)}
+.field textarea{min-height:150px;resize:vertical}
+.field input::placeholder,.field textarea::placeholder{color:#5D6A80}
+.field input:focus,.field textarea:focus{border-color:var(--trace);background:var(--panel-2);outline:none}
+.field input:focus-visible,.field textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.form-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px;margin-top:6px}
+.form-note{color:var(--text-secondary);font-size:.86rem;max-width:44ch;text-align:left}
+.form-ok{margin-top:22px;padding:18px 22px;border:1px solid var(--accent);background:var(--accent-muted);
+  color:var(--text-primary);font-size:.95rem;text-align:left;
+  opacity:0;height:0;overflow:hidden;transition:opacity .5s var(--ease),height .5s var(--ease-out)}
+.form-ok.on{opacity:1}
+.contact-alt{margin-top:26px;text-align:center;margin-inline:auto}
+.contact-alt a{color:var(--accent);border-bottom:1px solid transparent;transition:border-color .3s var(--ease)}
+.contact-alt a:hover{border-bottom-color:var(--accent)}
+@media (max-width:640px){.frow{grid-template-columns:1fr}}
+
+/* ---------- footer ---------- */
+.foot{border-top:1px solid var(--line);padding:clamp(46px,7vh,72px) 0 44px;position:relative;z-index:2;
+  background:rgba(10,13,19,.9)}
+.foot-in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:28px;align-items:flex-start}
+.foot-name{font-family:var(--display);font-weight:700;font-size:1.15rem;letter-spacing:-.02em}
+.foot-tag{margin-top:12px;color:var(--text-secondary);font-size:.88rem;max-width:40ch}
+.foot-links{display:flex;flex-wrap:wrap;gap:22px}
+.foot-links a{font-family:var(--mono);font-size:.71rem;letter-spacing:.13em;text-transform:uppercase;color:var(--text-secondary);
+  transition:color .3s var(--ease)}
+.foot-links a:hover{color:var(--accent)}
+.foot-base{margin-top:44px;padding-top:24px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;
+  color:var(--text-secondary);font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase}
+
+/* ============================================================
+   THE SCROLL INSTRUMENT (right edge)
+   ============================================================ */
+.rail-progress{position:fixed;right:clamp(10px,1.6vw,22px);top:50%;transform:translateY(-50%);
+  height:min(46vh,380px);width:26px;z-index:80;pointer-events:none;opacity:0;
+  transition:opacity .6s var(--ease)}
+.rail-progress.on{opacity:1}
+.rail-progress-track{position:absolute;left:12px;top:0;bottom:0;width:1px;background:var(--line-strong);opacity:.55}
+.rail-progress-fill{position:absolute;left:11px;top:0;width:3px;height:100%;background:var(--accent);
+  transform-origin:top;transform:scaleY(var(--sp,0));box-shadow:0 0 12px 1px rgba(255,79,63,.5)}
+.rail-progress-ticks{position:absolute;inset:0;pointer-events:auto}
+.rail-tick{position:absolute;right:0;width:26px;height:16px;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:flex-start;cursor:pointer;background:none;border:0;padding:0}
+.rail-tick::before{content:"";width:8px;height:1px;background:var(--line-strong);margin-left:9px;
+  transition:width .35s var(--ease-out),background .35s var(--ease)}
+.rail-tick:hover::before,.rail-tick[aria-current="true"]::before{width:17px;margin-left:0;background:var(--accent)}
+.rail-tick span{position:absolute;right:32px;white-space:nowrap;font-family:var(--mono);font-size:.6rem;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);
+  opacity:0;transform:translateX(6px);pointer-events:none;
+  transition:opacity .3s var(--ease),transform .3s var(--ease-out);
+  background:rgba(10,13,19,.86);padding:4px 8px;border:1px solid var(--line);border-radius:2px}
+.rail-tick:hover span{opacity:1;transform:translateX(0)}
+@media (max-width:900px),(pointer:coarse){.rail-progress{display:none}}
+@media (max-height:600px){.rail-progress{display:none}}
+
+/* ============================================================
+   THE SCAN SWEEP on section headings (echoes the inspection line)
+   ============================================================ */
+.sec-head h2{position:relative;overflow:hidden;padding-bottom:.08em}
+.sec-head h2::after{content:"";position:absolute;left:0;top:0;bottom:0;width:36%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(127,178,222,.34),transparent);
+  transform:translateX(-140%)}
+.sec-head.in h2::after{animation:sweep 1.15s var(--ease-out) .18s 1}
+@keyframes sweep{to{transform:translateX(320%)}}
+
+/* ============================================================
+   PICTURE GALLERIES (experience roles and project detail)
+   ============================================================ */
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,168px),1fr));gap:10px;margin-top:22px}
+.shot{position:relative;margin:0;padding:0;border:1px solid var(--line);background:var(--panel);
+  overflow:hidden;cursor:zoom-in;aspect-ratio:16/10;
+  transition:border-color .38s var(--ease),transform .5s var(--ease-out)}
+.shot:hover{border-color:var(--trace);transform:translateY(-3px)}
+.shot img,.shot video{width:100%;height:100%;object-fit:cover;display:block;
+  opacity:.8;transition:opacity .45s var(--ease),transform .7s var(--ease-out)}
+.shot:hover img,.shot:hover video{opacity:1;transform:scale(1.05)}
+.shot figcaption{position:absolute;left:0;right:0;bottom:0;padding:22px 10px 8px;
+  font-family:var(--mono);font-size:.58rem;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text-primary);background:linear-gradient(180deg,transparent,rgba(6,8,13,.9));
+  opacity:0;transform:translateY(6px);transition:opacity .38s var(--ease),transform .38s var(--ease-out)}
+.shot:hover figcaption{opacity:1;transform:none}
+.shot-badge{position:absolute;top:7px;right:7px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  background:rgba(6,8,13,.72);border:1px solid var(--line-strong);
+  display:flex;align-items:center;justify-content:center;color:var(--trace);
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  opacity:0;transition:opacity .38s var(--ease)}
+.shot:hover .shot-badge{opacity:1}
+
+/* ============================================================
+   THE VIEWER
+   ============================================================ */
+/* the hidden attribute sets display:none, but a display value in a class beats
+   it, so the closed viewer would otherwise sit invisibly over the whole page
+   and swallow every click on the site */
+.lightbox[hidden]{display:none}
+.lightbox{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;
+  background:rgba(5,7,11,.94);backdrop-filter:blur(8px);padding:clamp(46px,7vh,80px) clamp(16px,6vw,110px);
+  opacity:0;transition:opacity .32s var(--ease)}
+.lightbox.on{opacity:1}
+.lb-stage{margin:0;max-width:100%;max-height:100%;display:flex;flex-direction:column;gap:14px;align-items:center}
+.lb-media{max-width:100%;max-height:78vh;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-strong);background:var(--panel);overflow:hidden}
+.lb-media img,.lb-media video{max-width:100%;max-height:78vh;width:auto;height:auto;display:block}
+.lb-cap{display:flex;align-items:baseline;gap:14px;color:var(--text-secondary);font-size:.9rem;text-align:center;
+  flex-wrap:wrap;justify-content:center}
+.lb-cap .mono{color:var(--trace)}
+.lb-close{position:absolute;top:clamp(14px,2.4vh,26px);right:clamp(14px,2.4vw,30px);
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-secondary);border:1px solid var(--line-strong);border-radius:2px;padding:10px 15px;
+  min-height:44px;transition:border-color .3s var(--ease),color .3s var(--ease)}
+.lb-close:hover{border-color:var(--accent);color:var(--text-primary)}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;
+  border:1px solid var(--line-strong);border-radius:50%;color:var(--text-secondary);font-size:17px;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .3s var(--ease),color .3s var(--ease),background .3s var(--ease)}
+.lb-nav:hover{border-color:var(--accent);color:var(--text-primary);background:var(--accent-muted)}
+.lb-prev{left:clamp(8px,2vw,26px)}
+.lb-next{right:clamp(8px,2vw,26px)}
+.lb-nav[hidden]{display:none}
+body.lb-open{overflow:hidden}
+
+/* ============================================================
+   CARD DEPTH (pointer-driven, fine pointers only)
+   ============================================================ */
+@media (hover:hover) and (pointer:fine){
+  .card{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+    transition:transform .5s var(--ease-out),background .42s var(--ease)}
+  .card.tilting{transition:transform .1s linear,background .42s var(--ease)}
+  .card .card-glow{position:absolute;inset:0;pointer-events:none;opacity:var(--gl,0);
+    background:radial-gradient(circle 240px at var(--gx,50%) var(--gy,50%),rgba(127,178,222,.14),transparent 70%);
+    transition:opacity .4s var(--ease)}
+}
+
+/* the hero picks up a soft light that follows the cursor */
+.cursor-glow{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:0;
+  background:radial-gradient(circle 400px at var(--cx,50%) var(--cy,50%),rgba(127,178,222,.11),transparent 68%);
+  transition:opacity .7s var(--ease)}
+.stage.glow-on .cursor-glow{opacity:1}
+
+/* ============================================================
+   THE EDITOR'S SAFETY NET
+   ============================================================ */
+.content-error{position:relative;z-index:5;margin:0;padding:26px 0;background:rgba(255,79,63,.1);
+  border-top:1px solid var(--accent);border-bottom:1px solid var(--accent)}
+.content-error strong{font-family:var(--display);font-size:1.05rem}
+.content-error p{margin-top:10px;color:var(--text-primary);font-family:var(--mono);font-size:.8rem;line-height:1.6}
+.content-error .content-error-help{color:var(--text-secondary);font-family:var(--body);font-size:.92rem}
+.content-error code{color:var(--accent)}
+
+/* a role entry that carries pictures gets a little more room under it */
+.job .shots{margin-top:24px;max-width:640px}
+.quote-photo{width:44px;height:44px;border-radius:50%;object-fit:cover;border:1px solid var(--line-strong);
+  margin-bottom:12px}
+
+/* ============================================================
+   THE FIVE STATIC-HERO GATES (must match the JS strings exactly)
+   ============================================================ */
+@media (max-width:720px){.hero{display:none}.static-hero{display:flex}}
+@media (orientation:portrait) and (max-width:1024px){.hero{display:none}.static-hero{display:flex}}
+@media (orientation:portrait) and (pointer:coarse){.hero{display:none}.static-hero{display:flex}}
+@media (orientation:landscape) and (pointer:coarse) and (max-height:560px){.hero{display:none}.static-hero{display:flex}}
+html[data-motion="off"] .hero{display:none}
+html[data-motion="off"] .static-hero{display:flex}
+
+/* short desktop windows: keep the scrub, drop the overlays with no room */
+@media (max-height:560px){.ring-wrap{display:none}}
+
+/* ============================================================
+   THE RETICLE CURSOR
+   The site's signature is an inspection bracket. On a fine pointer the
+   cursor becomes one, and it locks onto whatever it is over.
+   ============================================================ */
+@media (hover:hover) and (pointer:fine){
+  html[data-motion="on"] body{cursor:none}
+  html[data-motion="on"] a,html[data-motion="on"] button,
+  html[data-motion="on"] input,html[data-motion="on"] textarea,
+  html[data-motion="on"] .shot,html[data-motion="on"] .card{cursor:none}
+  html[data-motion="on"] input,html[data-motion="on"] textarea{cursor:text}
+}
+.cur{position:fixed;left:0;top:0;z-index:300;pointer-events:none;opacity:0;
+  width:var(--cs,26px);height:var(--cs,26px);margin:calc(var(--cs,26px)/-2) 0 0 calc(var(--cs,26px)/-2);
+  transform:translate3d(var(--x,-100px),var(--y,-100px),0);
+  transition:opacity .3s var(--ease),width .34s var(--ease-out),height .34s var(--ease-out),
+             margin .34s var(--ease-out)}
+.cur.on{opacity:1}
+.cur i{position:absolute;width:8px;height:8px;border:1.5px solid var(--trace);
+  transition:border-color .3s var(--ease),inset .34s var(--ease-out),opacity .3s var(--ease)}
+.cur i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}
+.cur i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}
+.cur i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}
+.cur i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
+/* the pip in the middle: the thing being aimed at */
+.cur b{position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;
+  border-radius:50%;background:var(--trace);
+  transition:background .3s var(--ease),transform .34s var(--ease-out),opacity .3s var(--ease)}
+/* over something interactive it opens up and turns to the accent */
+.cur.locked{--cs:46px}
+.cur.locked i{border-color:var(--accent);width:11px;height:11px}
+.cur.locked b{background:var(--accent);transform:scale(2.4);opacity:.5}
+/* over text input it collapses to a bar */
+.cur.text{--cs:20px}
+.cur.text i{opacity:0}
+.cur.text b{transform:scaleY(7) scaleX(.5);background:var(--text-primary)}
+.cur.down{--cs:34px}
+.cur.down i{border-color:var(--accent)}
+html[data-motion="off"] .cur{display:none}
+@media (pointer:coarse){.cur{display:none}}
+
+/* ============================================================
+   THE RESOLVE
+   Headings arrive as noise and settle into their letters, which is the
+   one idea this whole site is about.
+   ============================================================ */
+.res{display:inline-block}
+.res .g{display:inline-block;white-space:pre}
+.res .g.noise{color:var(--trace);opacity:.72}
+
+/* ============================================================
+   NATIVE SCROLL-DRIVEN PROGRESS
+   Where the browser supports it, the reading bar runs entirely off the
+   scroll timeline on the compositor, with no JavaScript in the loop.
+   ============================================================ */
+.readbar{position:fixed;top:0;left:0;height:2px;width:100%;z-index:95;transform-origin:0 50%;
+  transform:scaleX(0);background:linear-gradient(90deg,var(--accent),var(--trace));
+  opacity:0;transition:opacity .5s var(--ease);pointer-events:none}
+html[data-motion="on"] .readbar{opacity:.9}
+html[data-motion="off"] .readbar{display:none}
+@supports (animation-timeline: scroll()){
+  html[data-motion="on"] .readbar{
+    animation:readgrow linear both;
+    animation-timeline:scroll(root block);
+  }
+}
+@keyframes readgrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+/* section headings drift in on their own view timeline, no observer needed */
+@supports (animation-timeline: view()){
+  html[data-motion="on"] .sec-head .kick{
+    animation:kickin linear both;
+    animation-timeline:view();
+    animation-range:entry 5% cover 26%;
+  }
+}
+@keyframes kickin{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
+
+/* ============================================================
+   FILM GRAIN
+   A whisper of moving grain over everything. It is what stops a large flat
+   dark area reading as dead pixels, and it ties the page to the footage,
+   which has grain of its own.
+   ============================================================ */
+.grain{position:fixed;inset:-120%;z-index:96;pointer-events:none;opacity:0;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='160' height='160' filter='url(%23n)' opacity='0.5'/></svg>");
+  transition:opacity 1.2s var(--ease)}
+html[data-motion="on"] .grain{opacity:.05;animation:grainshift 1.1s steps(6) infinite}
+html[data-motion="off"] .grain{display:none}
+@keyframes grainshift{
+  0%{transform:translate3d(0,0,0)}      20%{transform:translate3d(-3%,2%,0)}
+  40%{transform:translate3d(2%,-3%,0)}  60%{transform:translate3d(-2%,-2%,0)}
+  80%{transform:translate3d(3%,1%,0)}   100%{transform:translate3d(0,0,0)}
+}
+
+/* ============================================================
+   THE SCAN REVEAL
+   Pictures do not fade in, they get scanned in: a line passes down and the
+   image exists behind it. The same gesture as the inspection moment, so the
+   whole site keeps making the same argument.
+   ============================================================ */
+.scanin{position:relative;overflow:hidden}
+.scanin>img,.scanin>video{clip-path:inset(0 0 100% 0)}
+html[data-motion="on"] .scanin.revealed>img,
+html[data-motion="on"] .scanin.revealed>video{
+  animation:scanwipe .95s var(--ease-out) forwards}
+html[data-motion="off"] .scanin>img,html[data-motion="off"] .scanin>video{clip-path:none}
+@keyframes scanwipe{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+.scanin::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--trace),transparent);
+  box-shadow:0 0 16px 3px rgba(127,178,222,.5);opacity:0}
+html[data-motion="on"] .scanin.revealed::after{animation:scanpass .95s var(--ease-out) forwards}
+@keyframes scanpass{
+  0%{opacity:0;transform:translateY(0)}
+  12%{opacity:1}
+  88%{opacity:1}
+  100%{opacity:0;transform:translateY(var(--sh,300px))}
+}
+
+/* ============================================================
+   THE READING HIGHLIGHT
+   The long paragraph brightens word by word as you scroll through it, so the
+   line you are on is the brightest thing on screen. Runs on the browser's own
+   scroll timeline where that exists, which means the compositor drives it and
+   the main thread never sees it.
+   ============================================================ */
+.hl .hw{display:inline-block;white-space:pre;color:var(--text-secondary);opacity:.34}
+html[data-motion="off"] .hl .hw{opacity:1}
+@supports (animation-timeline: view()){
+  html[data-motion="on"] .hl{view-timeline-name:--hlt;view-timeline-axis:block}
+  html[data-motion="on"] .hl .hw{
+    animation:hlon linear both;
+    animation-timeline:--hlt;
+  }
+}
+@keyframes hlon{
+  from{opacity:.34;color:var(--text-secondary)}
+  to{opacity:1;color:var(--text-primary)}
+}
+/* browsers without scroll timelines get a plain observer-driven reveal */
+.hl.lit .hw{opacity:1;color:var(--text-primary);transition:opacity .5s var(--ease),color .5s var(--ease)}
+
+/* ============================================================
+   THE SCROLL CUE
+   The hero is a scrubber: it does not move on its own, ever. Without
+   something saying so, a visitor lands on a still frame and waits for a video
+   that is never going to start. This is that something. It stays until the
+   first scroll and comes back if they return to the top.
+   ============================================================ */
+.cue{position:absolute;left:50%;bottom:clamp(22px,4vh,44px);transform:translateX(-50%);
+  z-index:7;display:flex;flex-direction:column;align-items:center;gap:10px;
+  pointer-events:none;opacity:0;transition:opacity .7s var(--ease)}
+.stage.cue-on .cue{opacity:1}
+/* the notice occupies the same corner, so the cue steps up while it is out */
+body.notice-on .cue{bottom:clamp(118px,15vh,150px);transition:bottom .5s var(--ease-out),opacity .7s var(--ease)}
+.cue-word{font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text-on-footage);text-shadow:var(--tshadow);white-space:nowrap}
+.cue-arrow{width:26px;height:38px;position:relative;color:var(--trace)}
+.cue-arrow svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+html[data-motion="on"] .cue-arrow{animation:cuebounce 1.9s var(--ease) infinite}
+@keyframes cuebounce{
+  0%,100%{transform:translateY(0)}
+  28%{transform:translateY(9px)}
+  46%{transform:translateY(2px)}
+  62%{transform:translateY(6px)}
+}
+/* a soft pulse behind it, so it reads against busy footage */
+.cue-arrow::before{content:"";position:absolute;left:50%;top:50%;width:52px;height:52px;
+  margin:-26px 0 0 -26px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(127,178,222,.22),transparent 68%)}
+html[data-motion="on"] .cue-arrow::before{animation:cuepulse 1.9s var(--ease) infinite}
+@keyframes cuepulse{0%,100%{opacity:.5;transform:scale(.9)}40%{opacity:1;transform:scale(1.15)}}
+
+/* ============================================================
+   THE MOTION NOTICE
+   Said once, on the first visit, before anything has had a chance to
+   surprise anyone. It is also the only place the current state is stated in
+   words, which matters when the setting is remembered across visits.
+   ============================================================ */
+.mnotice{position:fixed;left:50%;bottom:clamp(16px,3vh,30px);transform:translateX(-50%) translateY(22px);
+  z-index:120;max-width:min(94vw,560px);
+  display:flex;align-items:center;gap:clamp(12px,2vw,20px);flex-wrap:wrap;justify-content:center;
+  padding:15px clamp(16px,2.4vw,24px);
+  background:rgba(12,16,24,.94);border:1px solid var(--line-strong);border-radius:3px;
+  backdrop-filter:blur(14px);box-shadow:0 18px 60px rgba(0,0,0,.55);
+  opacity:0;pointer-events:none;
+  transition:opacity .55s var(--ease),transform .55s var(--ease-out)}
+.mnotice.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.mnotice p{color:var(--text-primary);font-size:.9rem;line-height:1.5;margin:0;flex:1 1 240px;min-width:0}
+.mnotice p b{color:var(--trace);font-weight:500}
+.mnotice-acts{display:flex;gap:9px;flex:none}
+.mnotice button{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;
+  padding:11px 15px;border-radius:2px;border:1px solid var(--line-strong);color:var(--text-secondary);
+  background:none;cursor:pointer;min-height:40px;white-space:nowrap;
+  transition:border-color .3s var(--ease),color .3s var(--ease),background .3s var(--ease)}
+.mnotice button:hover{border-color:var(--trace);color:var(--text-primary);background:rgba(127,178,222,.1)}
+.mnotice .primary{border-color:var(--accent);color:var(--accent)}
+.mnotice .primary:hover{background:var(--accent-muted);color:var(--text-primary)}
+@media (max-width:560px){
+  .mnotice{flex-direction:column;align-items:stretch;text-align:center}
+  .mnotice-acts{justify-content:center}
+}
+
+/* ============================================================
+   REDUCED MOTION, honored completely and in both directions
+   ============================================================ */
+/* ============================================================
+   REDUCED MOTION
+   Driven by an attribute rather than the media query directly, so a visitor
+   can turn motion back on for this site without changing a system setting.
+   An inline script in the head sets it before first paint, from the system
+   preference unless the visitor has chosen otherwise.
+   ============================================================ */
+
+  html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after{
+  animation-duration:.001ms !important;animation-iteration-count:1 !important;
+  transition-duration:.001ms !important;transition-delay:0s !important;scroll-behavior:auto !important}
+  html[data-motion="off"] body{opacity:1;animation:none}
+  html[data-motion="off"] .rise, html[data-motion="off"] .stagger>*{opacity:1;transform:none}
+  html[data-motion="off"] .rail-svg path{stroke-dashoffset:0}
+  html[data-motion="off"] .rail-svg circle{opacity:1}
+  html[data-motion="off"] .insp-reveal p{opacity:1;transform:none}
+  html[data-motion="off"] .mote{display:none}
+  html[data-motion="off"] .sec-head.in h2::after{animation:none;transform:translateX(-140%)}
+  html[data-motion="off"] .rail-progress{opacity:1}
+  html[data-motion="off"] .cursor-glow{display:none}
+  html[data-motion="off"] .gl-field{display:none}
+  /* re-apply positional transforms that the blanket rules would have wiped */
+  html[data-motion="off"] .env-glow{transform:translate(-50%,-50%)}
+  html[data-motion="off"] .board-grid{transform:perspective(700px) rotateX(58deg) translateY(6%)}
+  html[data-motion="off"] .ret span:nth-child(1), html[data-motion="off"] .ret span:nth-child(2), html[data-motion="off"] .ret span:nth-child(3), html[data-motion="off"] .ret span:nth-child(4){transform:translate(0,0);opacity:.85}
+  html[data-motion="off"] .rail-progress{transform:translateY(-50%)}
+  html[data-motion="off"] .rail-tick{transform:translateY(-50%)}
+  html[data-motion="off"] .lb-nav{transform:translateY(-50%)}
+  html[data-motion="off"] .card{transform:none !important}
+
+
+
+/* pause every animation on a hidden tab or an off-screen section */
+body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused !important}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="readbar" id="readbar" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- said once, on a first visit, before anything can surprise anyone -->
+<div class="mnotice" id="mnotice" role="status">
+  <p id="mnoticeText"></p>
+  <span class="mnotice-acts">
+    <button type="button" id="mnoticeAct" class="primary"></button>
+    <button type="button" id="mnoticeOk">Got it</button>
+  </span>
+</div>
+<div class="cur" id="cur" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
+
+<!-- one fixed environment layer behind everything -->
+<div class="env" aria-hidden="true">
+  <canvas id="fieldCanvas" class="gl-field"></canvas>
+  <div class="env-grid"></div>
+  <div class="env-glow"></div>
+  <div class="motes" id="motes"></div>
+</div>
+
+<nav class="nav" id="nav">
+  <a class="nav-name" href="#top"><span class="nav-dot" aria-hidden="true"></span>Ming Yang</a>
+  <div class="nav-links">
+    <a href="#proof">Proof</a>
+    <a href="#about">About</a>
+    <a href="#experience">Experience</a>
+    <a href="#work">Work</a>
+    <a href="#faq">Answers</a>
+    <a class="nav-cta" href="#contact">Get in touch</a>
+  </div>
+</nav>
+
+<span id="top"></span>
+
+<!-- ============================================================
+     THE SCRUB HERO (laptops and desktops)
+     ============================================================ -->
+<div class="hero" id="hero-wrap">
+  <h1 class="sr">Ming Yang. I find what other people miss. Applied Computing and Fintech at the Singapore Institute of Technology.</h1>
+  <div class="stage" id="stage">
+
+    <!-- the designed board backdrop. always present, so the hero is
+         complete with no poster and no video at all -->
+    <div class="board" aria-hidden="true">
+      <div class="board-grid"></div>
+      <div class="board-glow"></div>
+      <div class="board-flag"></div>
+    </div>
+
+    <div class="poster" id="poster" aria-hidden="true"></div>
+    <video id="hero" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video>
+    <div class="scrim" aria-hidden="true"></div>
+
+    <div class="ring-wrap" id="ringWrap" aria-hidden="true">
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true">
+        <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(127,178,222,.18)" stroke-width="3"/>
+        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/>
+      </svg>
+      <span class="ring-label" id="ringLabel">Loading the descent</span>
+    </div>
+
+    <div class="cue" id="cue" aria-hidden="true">
+      <span class="cue-word">Scroll to descend</span>
+      <span class="cue-arrow">
+        <svg viewBox="0 0 26 38" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 4v26"/><path d="M5 22l8 8 8-8"/>
+        </svg>
+      </span>
+    </div>
+
+    <div class="bands" id="bands" aria-hidden="true">
+
+      <div class="band" id="band1" data-a="0" data-b="0.22">
+        <div class="band-inner"><div class="band-col">
+          <span class="kick mono">01 / Resolution</span>
+          <h2 class="split e-drift" data-text="I find what other people miss."></h2>
+        </div></div>
+      </div>
+
+      <div class="band" id="band2" data-a="0.26" data-b="0.48" data-spread="0.5">
+        <div class="band-inner"><div class="band-col">
+          <h2 class="split e-grid" data-text="Defects on a wafer. Phishing in an inbox. A jam three roads away."></h2>
+        </div></div>
+      </div>
+
+      <div class="band" id="band3" data-a="0.52" data-b="0.72" data-ramp="0.036">
+        <div class="band-inner"><div class="band-col">
+          <h2 class="e-blur">
+            <span class="soft" aria-hidden="true">The signal was always there. Someone had to go down and look.</span>
+            <span class="sharp">The signal was always there. Someone had to go down and look.</span>
+          </h2>
+        </div></div>
+      </div>
+
+      <div class="band" id="band4" data-a="0.78" data-b="1">
+        <div class="band-inner"><div class="band-col">
+          <h2 class="split e-settle" data-text="Ming Yang"></h2>
+          <p class="sub">Applied Computing and Fintech at the Singapore Institute of Technology. I build the systems that make problems visible.</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#work">See the work <span class="arw" aria-hidden="true">&#8594;</span></a>
+            <a class="btn btn-ghost" href="mailto:mychw208@gmail.com">Email me</a>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     THE STATIC HERO (phones, portrait tablets, reduced motion)
+     a designed layout, not an apology
+     ============================================================ -->
+<header class="static-hero" id="staticHero">
+  <div class="board" aria-hidden="true">
+    <div class="board-grid"></div>
+    <div class="board-glow"></div>
+    <div class="board-flag"></div>
+  </div>
+  <div class="sh-img" id="shImg" aria-hidden="true"></div>
+  <div class="scrim" aria-hidden="true"></div>
+  <div class="sh-inner">
+    <span class="kick mono">01 / Resolution</span>
+    <h1>I find what other people miss.</h1>
+    <p class="sub">Ming Yang. Applied Computing and Fintech at the Singapore Institute of Technology. I build the systems that make problems visible.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#work">See the work <span class="arw" aria-hidden="true">&#8594;</span></a>
+      <a class="btn btn-ghost" href="mailto:mychw208@gmail.com">Email me</a>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+
+<!-- Every section below is filled in from assets/content.js.
+     Edit that file, save, refresh. Nothing here needs touching. -->
+
+<noscript>
+  <section class="sec"><div class="wrap">
+    <h2>Ming Yang</h2>
+    <p class="lede" style="margin-top:18px">Applied Computing and Fintech at the Singapore Institute of Technology. This page uses JavaScript to lay itself out. Email me at <a href="mailto:mychw208@gmail.com" style="color:var(--accent)">mychw208@gmail.com</a> and I will send everything across directly.</p>
+  </div></section>
+</noscript>
+
+<!-- a plain-words banner if content.js has a typo in it, so the page never
+     just goes blank on whoever is editing -->
+<div class="content-error" id="contentError" hidden>
+  <div class="wrap">
+    <strong>The content file has a small problem.</strong>
+    <p id="contentErrorMsg"></p>
+    <p class="content-error-help">Open <code>assets/content.js</code> and look at the line above. Nearly always it is a missing quote mark or a missing comma. Undo your last change and the site comes straight back.</p>
+  </div>
+</div>
+
+<section class="sec" id="proof"><div class="wrap">
+  <div class="proof stagger" id="proofStrip"></div>
+  <p class="proof-note rise" id="proofNote"></p>
+</div></section>
+
+<section class="sec sec-alt" id="about"><div class="wrap">
+  <div class="about" id="aboutBlock"></div>
+</div></section>
+
+<section class="sec" id="experience"><div class="wrap">
+  <div class="sec-head rise" id="experienceHead"></div>
+  <div class="rail" id="rail">
+    <svg class="rail-svg" id="railSvg" viewBox="0 0 60 1000" preserveAspectRatio="none" aria-hidden="true">
+      <path id="railPath" d="M30 0 L30 120 L30 180 L14 210 L14 250 L30 280 L30 470 L46 500 L46 540 L30 570 L30 1000"/>
+    </svg>
+    <div id="jobs"></div>
+  </div>
+</div></section>
+
+<section class="sec sec-alt" id="testimonials"><div class="wrap">
+  <div class="sec-head rise" id="testimonialsHead"></div>
+  <div class="quotes stagger" id="quotes"></div>
+</div></section>
+
+<section class="sec" id="method"><div class="wrap">
+  <div class="sec-head rise" id="methodHead"></div>
+  <div class="insp rise" id="insp">
+    <div class="insp-field" id="inspField">
+      <div class="ret ret-red" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <svg id="inspSvg" viewBox="0 0 800 350" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="scanline" aria-hidden="true"></div>
+    </div>
+    <div class="insp-bar">
+      <button class="hold" id="holdBtn" aria-describedby="inspHint">
+        <span id="holdLabel">Hold to scan</span>
+      </button>
+      <div class="insp-count" id="inspCount" aria-live="polite">0 / 4</div>
+      <div class="insp-hint mono" id="inspHint">faults found</div>
+    </div>
+    <div class="insp-reveal" id="inspReveal"></div>
+  </div>
+</div></section>
+
+<section class="sec sec-alt" id="work"><div class="wrap">
+  <div class="sec-head rise" id="workHead"></div>
+  <div class="filters" id="filters" role="group" aria-label="Filter projects"></div>
+  <div class="grid" id="grid"></div>
+</div></section>
+
+<section class="sec" id="faq"><div class="wrap">
+  <div class="sec-head rise" id="faqHead"></div>
+  <div class="faq rise" id="faqList"></div>
+</div></section>
+
+<section class="sec sec-alt" id="contact"><div class="wrap">
+  <div class="contact" id="contactBlock"></div>
+</div></section>
+
+</main>
+
+<footer class="foot"><div class="wrap">
+  <div class="foot-in" id="footTop"></div>
+  <div class="foot-base">
+    <span>&copy; <span id="yr">2026</span> <span id="footYearName">Ming Yang</span></span>
+    <span>Built as a single file. No framework, no build step.</span>
+    <span>Hero footage is generated. Project images are real.</span>
+    <button class="motion-toggle" id="motionToggle" type="button" aria-pressed="true">
+      <span class="motion-dot" aria-hidden="true"></span>
+      <span class="lbl"><span class="on-label">Motion on</span><span class="off-label">Motion off</span></span>
+    </button>
+  </div>
+</div></footer>
+
+<!-- the scroll instrument, right edge -->
+<div class="rail-progress" id="scrollRail" aria-hidden="true">
+  <div class="rail-progress-track"></div>
+  <div class="rail-progress-fill" id="scrollFill"></div>
+  <div class="rail-progress-ticks" id="scrollTicks"></div>
+</div>
+
+<!-- the gallery viewer, used by every picture on the site -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer" hidden>
+  <button class="lb-close" id="lbClose" aria-label="Close viewer">Close</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="Previous">&#8592;</button>
+  <button class="lb-nav lb-next" id="lbNext" aria-label="Next">&#8594;</button>
+  <figure class="lb-stage">
+    <div class="lb-media" id="lbMedia"></div>
+    <figcaption class="lb-cap"><span id="lbCount" class="mono"></span><span id="lbText"></span></figcaption>
+  </figure>
+</div>
+<script src="assets/content.js"></script>
+<script src="assets/field.js" defer></script>
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   1. UTILITIES
+   ============================================================ */
+var $=function(s,r){return (r||document).querySelector(s)},
+    $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))},
+    clamp=function(v,lo,hi){return Math.min(hi,Math.max(lo,v))},
+    smoothstep=function(p,e0,e1){var t=clamp((p-e0)/(e1-e0),0,1);return t*t*(3-2*t)};
+
+function rng(seed){var s=seed>>>0;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+function esc(v){return String(v==null?'':v)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function el(tag,cls,html){var n=document.createElement(tag);if(cls)n.className=cls;
+  if(html!=null)n.innerHTML=html;return n}
+
+/* One source of truth for motion. The system preference is the default, a
+   visitor can override it for this site, and everything else asks here rather
+   than asking the media query directly. `reduced.matches` is kept as the shape
+   so the rest of the file reads unchanged. */
+var motion=(function(){
+  var mq=matchMedia('(prefers-reduced-motion: reduce)');
+  var root=document.documentElement, listeners=[];
+  function pref(){ try{ return localStorage.getItem('motion')||'auto' }catch(e){ return 'auto' } }
+  // motion is on for everyone unless this visitor switched it off here
+  function isOff(){ return pref()==='off' }
+  function apply(){
+    var off=isOff();
+    root.setAttribute('data-motion', off?'off':'on');
+    root.setAttribute('data-motion-pref', pref());
+    var b=document.getElementById('motionToggle');
+    if(b){
+      b.setAttribute('aria-pressed', off?'false':'true');
+      b.setAttribute('title', off ? 'Motion is off. Turn it on for the scrolling hero video and the animations.'
+                                  : 'Motion is on. Turn it off for a still, calm version of this site.');
+    }
+    listeners.forEach(function(fn){ try{ fn(off) }catch(e){} });
+  }
+  mq.addEventListener('change',apply);   // kept so the label stays truthful
+  return {
+    get matches(){ return isOff() },
+    set:function(v){ try{ localStorage.setItem('motion',v) }catch(e){} apply() },
+    toggle:function(){ this.set(isOff()?'on':'off') },
+    onChange:function(fn){ listeners.push(fn) },
+    apply:apply
+  };
+})();
+var reduced=motion;
+
+/* ============================================================
+   2. THE CONTENT FILE, AND WHAT TO DO IF IT IS BROKEN
+   The person editing this site is not a programmer. A missing comma should
+   produce a plain sentence telling them where to look, never a blank page.
+   ============================================================ */
+function contentProblem(msg){
+  var box=$('#contentError');
+  if(!box) return;
+  box.hidden=false;
+  $('#contentErrorMsg').textContent=msg;
+}
+var SITE=window.SITE;
+if(!SITE){
+  contentProblem('The browser could not read assets/content.js at all. That usually means a quote mark or a bracket was left unclosed somewhere in it.');
+  SITE={};
+}
+function need(key,fallback){
+  if(SITE[key]==null){
+    contentProblem('content.js is missing the "'+key+'" section, so that part of the page is empty.');
+    return fallback;
+  }
+  return SITE[key];
+}
+var ID=need('identity',{});
+
+/* ============================================================
+   3. RENDERING THE PAGE FROM THE CONTENT FILE
+   ============================================================ */
+function headBlock(o){
+  if(!o) return '';
+  return '<span class="kick mono">'+esc(o.kicker)+'</span><h2>'+esc(o.heading)+'</h2>'+
+         (o.lede?'<p class="lede">'+esc(o.lede)+'</p>':'');
+}
+function retDots(cls){
+  return '<div class="ret'+(cls?' '+cls:'')+'" aria-hidden="true"><span></span><span></span><span></span><span></span></div>';
+}
+
+/* ---- shots: the one gallery builder every section shares ---- */
+var GALLERIES=[];             // every gallery on the page, for the viewer
+function shotsHTML(shots,label){
+  if(!shots||!shots.length) return '';
+  var gi=GALLERIES.length;
+  GALLERIES.push({items:shots,label:label||''});
+  var html='<div class="shots" data-gallery="'+gi+'">';
+  shots.forEach(function(s,i){
+    var kind=s[0],file=s[1],cap=s[2]||'';
+    var src=(kind==='vid'?'assets/gif/':'assets/img/')+file;
+    var media=kind==='vid'
+      ? '<video src="'+esc(src)+'" muted loop playsinline preload="metadata"></video>'
+      : '<img src="'+esc(src)+'" alt="'+esc(cap)+'" loading="lazy" decoding="async">';
+    html+='<figure class="shot" data-i="'+i+'" tabindex="0" role="button" aria-label="Open: '+esc(cap)+'">'+
+          media+'<span class="shot-badge">'+(kind==='vid'?'PLAY':'VIEW')+'</span>'+
+          (cap?'<figcaption>'+esc(cap)+'</figcaption>':'')+'</figure>';
+  });
+  return html+'</div>';
+}
+
+function render(){
+  /* ---- the hero, written over the HTML defaults ---- */
+  var H=SITE.hero;
+  if(H){
+    var setText=function(sel,v){var n=$(sel);if(n&&v!=null)n.textContent=v};
+    var b1=$('#band1 .split'),b2=$('#band2 .split'),b4=$('#band4 .split');
+    if(b1&&H.band1) b1.setAttribute('data-text',H.band1);
+    if(b2&&H.band2) b2.setAttribute('data-text',H.band2);
+    if(b4&&H.name)  b4.setAttribute('data-text',H.name);
+    if(H.band3){ $$('#band3 .soft,#band3 .sharp').forEach(function(n){n.textContent=H.band3}) }
+    if(H.kicker){ $$('#band1 .kick,#staticHero .kick').forEach(function(n){n.textContent=H.kicker}) }
+    if(H.subline) setText('#band4 .sub',H.subline);
+    if(H.ctaWork) $$('.cta-row .btn-primary').forEach(function(a){
+      a.innerHTML=esc(H.ctaWork)+' <span class="arw" aria-hidden="true">&#8594;</span>'});
+    if(H.ctaMail) $$('.cta-row .btn-ghost').forEach(function(a){a.textContent=H.ctaMail});
+    setText('#staticHero h1',H.band1);
+    if(H.subline) setText('#staticHero .sub',ID.name+'. '+H.subline);
+  }
+  var mail='mailto:'+(ID.email||'');
+  $$('a[data-mail]').forEach(function(a){a.href=mail});
+  $$('.cta-row .btn-ghost').forEach(function(a){a.href=mail});
+
+  /* ---- 01 proof ---- */
+  var strip=$('#proofStrip');
+  (need('proof',[])||[]).forEach(function(c){
+    var cell=el('div','proof-cell');
+    cell.innerHTML=retDots()+
+      '<div class="proof-num'+(c.accent?' is-accent':'')+'" data-target="'+esc(c.num)+'">'+esc(c.num)+'</div>'+
+      '<div class="proof-lbl">'+esc(c.label)+'</div>'+
+      '<div class="proof-org mono">'+esc(c.org)+'</div>';
+    strip.appendChild(cell);
+  });
+  if(SITE.proofNote) $('#proofNote').textContent=SITE.proofNote;
+
+  /* ---- 02 about ---- */
+  var A=need('about',{});
+  $('#aboutBlock').innerHTML=
+    '<div class="portrait rise" id="portrait">'+retDots('ret-red')+
+      (A.portrait?'<img src="assets/img/'+esc(A.portrait)+'" alt="'+esc(ID.name)+'" loading="lazy" decoding="async">'
+                 :'<div class="portrait-ph"><span class="mono">Portrait</span><span>Add one as assets/img/your-photo.jpg and name it in content.js.</span></div>')+
+    '</div>'+
+    '<div class="about-body">'+
+      '<div class="sec-head rise">'+headBlock({kicker:A.kicker,heading:A.heading})+'</div>'+
+      (A.lede?'<p class="lede-big rise">'+esc(A.lede)+'</p>':'')+
+      (A.body||[]).map(function(p){return '<p class="rise">'+esc(p)+'</p>'}).join('')+
+      '<div class="tags rise">'+(A.tags||[]).map(function(t){return '<span class="tag">'+esc(t)+'</span>'}).join('')+'</div>'+
+      '<div class="about-actions rise">'+
+        (ID.resume?'<a class="btn btn-primary" href="'+esc(ID.resume)+'" download>Download the resume <span class="arw" aria-hidden="true">&#8595;</span></a>':'')+
+        (ID.linkedin?'<a class="btn btn-ghost" href="'+esc(ID.linkedin)+'" target="_blank" rel="noopener">LinkedIn</a>':'')+
+      '</div>'+
+    '</div>';
+
+  /* ---- 03 experience: one standard card each, detail behind a click ---- */
+  $('#experienceHead').innerHTML=headBlock(SITE.experienceIntro);
+  var jobs=$('#jobs');
+  (need('experience',[])||[]).forEach(function(j,i){
+    var art=el('article','job rise'+(j.lead?' job-lead':''));
+    art.setAttribute('data-open','0');
+    var d=j.detail||{};
+    var hasDetail=!!(d.intro||d.points||d.shots||d.quote);
+    art.innerHTML=
+      '<button class="job-head" type="button"'+(hasDetail?' aria-expanded="false" aria-controls="jobdetail'+i+'"':' disabled')+'>'+
+        '<span class="job-when mono">'+esc(j.when)+'</span>'+
+        '<span>'+
+          (j.logo?'<img class="job-logo'+(j.logoTall?' sq':'')+'" src="assets/img/'+esc(j.logo)+'" alt="'+esc(j.org)+'" loading="lazy">':'')+
+          '<h3>'+esc(j.role)+'</h3>'+
+          '<span class="job-org">'+esc(j.org)+'</span>'+
+          (j.summary?'<span class="job-summary" style="display:block">'+esc(j.summary)+'</span>':'')+
+          (j.win?'<span class="job-win"><span>'+esc(j.win)+'</span></span>':'')+
+        '</span>'+
+        (hasDetail?'<span class="job-toggle" aria-hidden="true"></span>':'<span></span>')+
+      '</button>'+
+      (hasDetail?
+      '<div class="job-detail" id="jobdetail'+i+'"><div class="job-detail-in">'+
+        '<div class="job-detail-rail"></div>'+
+        '<div class="job-detail-body">'+
+          (d.intro||[]).map(function(p){return '<p>'+esc(p)+'</p>'}).join('')+
+          (d.points&&d.points.length?'<ul class="job-list">'+d.points.map(function(p){
+            return '<li>'+(p[0]?'<b>'+esc(p[0])+'.</b> ':'')+esc(p[1])+'</li>'}).join('')+'</ul>':'')+
+          (d.quote?'<blockquote class="job-quote"><p>'+esc(d.quote.text)+'</p><cite>'+esc(d.quote.who)+'</cite></blockquote>':'')+
+          (d.stack&&d.stack.length?'<div class="job-stack">'+d.stack.map(function(t){
+            return '<span class="card-tag">'+esc(t)+'</span>'}).join('')+'</div>':'')+
+          shotsHTML(d.shots,j.org)+
+        '</div>'+
+      '</div></div>':'');
+    jobs.appendChild(art);
+  });
+
+  /* ---- 04 testimonials ---- */
+  $('#testimonialsHead').innerHTML=headBlock(SITE.testimonialsIntro);
+  var qs=$('#quotes');
+  (need('testimonials',[])||[]).forEach(function(t){
+    var fig=el('figure','quote'+(t.pending?' quote-pending':''));
+    fig.innerHTML=retDots()+'<div class="quote-mark" aria-hidden="true">&ldquo;</div>'+
+      '<blockquote>'+
+        (t.pending?'<p class="pending-note">'+esc(t.note)+'</p>'
+                  :(t.quote||[]).map(function(p){return '<p>'+esc(p)+'</p>'}).join(''))+
+      '</blockquote>'+
+      '<figcaption>'+
+        (t.photo?'<img class="quote-photo" src="assets/img/'+esc(t.photo)+'" alt="'+esc(t.who)+'" loading="lazy">':'')+
+        '<span class="quote-who">'+esc(t.who)+'</span>'+
+        '<span class="quote-role mono">'+esc(t.role)+'</span>'+
+      '</figcaption>';
+    qs.appendChild(fig);
+  });
+
+  /* ---- 05 method ---- */
+  var M=need('method',{});
+  $('#methodHead').innerHTML=headBlock(M);
+  $('#inspReveal').innerHTML=(M.reveal||[]).map(function(p){return '<p>'+esc(p)+'</p>'}).join('');
+
+  /* ---- 06 projects ---- */
+  var PR=need('projects',[])||[];
+  var W=SITE.projectsIntro||{};
+  $('#workHead').innerHTML=headBlock({kicker:W.kicker,heading:PR.length+', '+(W.heading||''),lede:W.lede});
+  var fbox=$('#filters');
+  (SITE.filters||[]).forEach(function(f,i){
+    var n=f.cat==='all'?PR.length:PR.filter(function(p){return p.cat===f.cat}).length;
+    if(!n) return;
+    var b=el('button','filt',esc(f.label)+' '+n);
+    b.type='button';b.setAttribute('data-cat',f.cat);
+    b.setAttribute('aria-pressed',i===0?'true':'false');
+    fbox.appendChild(b);
+  });
+  var grid=$('#grid');
+  PR.forEach(function(p){
+    var b=el('button','card');
+    b.type='button';b.setAttribute('data-id',p.id);b.setAttribute('data-cat',p.cat);
+    b.setAttribute('aria-expanded','false');
+    b.innerHTML=retDots()+'<span class="card-glow" aria-hidden="true"></span>'+
+      '<div class="card-media"><img src="assets/img/'+esc(p.img)+'" alt="" loading="lazy" decoding="async"></div>'+
+      '<div class="card-body">'+
+        '<div class="card-proves">'+esc(p.proves)+'</div>'+
+        '<h3>'+esc(p.title)+'</h3>'+
+        '<p class="card-sum">'+esc(p.sum)+'</p>'+
+        '<div class="card-tags">'+(p.tags||[]).map(function(t){return '<span class="card-tag">'+esc(t)+'</span>'}).join('')+'</div>'+
+        '<div class="card-open mono">Open detail <span class="arw" aria-hidden="true">&#8594;</span></div>'+
+      '</div>';
+    grid.appendChild(b);
+  });
+
+  /* ---- 07 faq ---- */
+  $('#faqHead').innerHTML=headBlock(SITE.faqIntro);
+  var fl=$('#faqList');
+  (need('faq',[])||[]).forEach(function(f){
+    var d=el('div','qa');d.setAttribute('data-open','0');
+    d.innerHTML='<button class="qa-q" type="button" aria-expanded="false">'+esc(f.q)+
+      '<span class="qa-sign" aria-hidden="true"></span></button>'+
+      '<div class="qa-a"><p>'+esc(f.a)+'</p></div>';
+    fl.appendChild(d);
+  });
+
+  /* ---- 08 contact ---- */
+  var C=need('contact',{});
+  $('#contactBlock').innerHTML=
+    '<div class="sec-head rise">'+headBlock(C)+'</div>'+
+    '<form class="form rise" id="form" novalidate>'+retDots()+
+      '<div class="frow">'+
+        '<div class="field"><label for="f-name">'+esc(C.nameLabel)+'</label>'+
+          '<input id="f-name" type="text" placeholder="'+esc(C.namePlaceholder)+'" autocomplete="name" required></div>'+
+        '<div class="field"><label for="f-email">'+esc(C.mailLabel)+'</label>'+
+          '<input id="f-email" type="email" placeholder="'+esc(C.mailPlaceholder)+'" autocomplete="email" required></div>'+
+      '</div>'+
+      '<div class="field"><label for="f-msg">'+esc(C.msgLabel)+'</label>'+
+        '<textarea id="f-msg" placeholder="'+esc(C.msgPlaceholder)+'" required></textarea></div>'+
+      '<div class="form-foot"><p class="form-note">'+esc(C.note)+'</p>'+
+        '<button class="btn btn-primary" type="submit">'+esc(C.button)+' <span class="arw" aria-hidden="true">&#8594;</span></button></div>'+
+      '<div class="form-ok" id="formOk" role="status">'+esc(C.success)+'</div>'+
+    '</form>'+
+    '<p class="form-note rise contact-alt">Or write to <a href="'+mail+'">'+esc(ID.email)+'</a> directly.</p>';
+
+  /* ---- footer ---- */
+  var links=[['Email',mail],['LinkedIn',ID.linkedin],['GitHub',ID.github],['Instagram',ID.instagram]]
+    .filter(function(l){return l[1]});
+  $('#footTop').innerHTML=
+    '<div><div class="foot-name">'+esc(ID.name)+'</div>'+
+    '<p class="foot-tag">'+esc(ID.footerLine)+'</p></div>'+
+    '<div class="foot-links">'+links.map(function(l){
+      var ext=l[1].indexOf('mailto:')!==0;
+      return '<a href="'+esc(l[1])+'"'+(ext?' target="_blank" rel="noopener"':'')+'>'+esc(l[0])+'</a>'}).join('')+'</div>';
+  $('#footYearName').textContent=ID.name||'';
+}
+
+try{ render(); }
+catch(err){
+  contentProblem('Something in content.js stopped the page building: '+err.message);
+}
+$('#yr').textContent=new Date().getFullYear();
+
+/* ============================================================
+   4. ENVIRONMENT MOTES
+   ============================================================ */
+(function(){
+  var box=$('#motes'); if(!box) return;
+  var r=rng(20260826);
+  for(var i=0;i<12;i++){
+    var m=el('div','mote');
+    m.style.left=(r()*100).toFixed(2)+'%';
+    m.style.top=(60+r()*45).toFixed(2)+'%';
+    m.style.setProperty('--mx',((r()-.5)*90).toFixed(0)+'px');
+    m.style.setProperty('--my',(-140-r()*260).toFixed(0)+'px');
+    m.style.animationDuration=(40+r()*30).toFixed(1)+'s';
+    m.style.animationDelay=(-r()*70).toFixed(1)+'s';
+    box.appendChild(m);
+  }
+})();
+
+/* ============================================================
+   5. NAV
+   ============================================================ */
+(function(){
+  var nav=$('#nav'),last=null;
+  function upd(){var s=scrollY>60;if(s!==last){last=s;nav.classList.toggle('solid',s)}}
+  addEventListener('scroll',upd,{passive:true});upd();
+})();
+
+/* ============================================================
+   6. ENTRANCES + RETICLES
+   ============================================================ */
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(!e.isIntersecting) return;
+    var t=e.target;
+    t.classList.add('in');
+    if(t.classList.contains('stagger')) setTimeout(function(){t.classList.add('done')},1400);
+    $$('.ret',t).forEach(function(r,i){setTimeout(function(){r.classList.add('ret-on')},120+i*90)});
+    io.unobserve(t);
+  });
+},{rootMargin:'0px 0px -12% 0px',threshold:.12});
+$$('.rise,.stagger,.sec,.sec-head,.proof-cell,.portrait').forEach(function(x){io.observe(x)});
+
+/* ============================================================
+   7. THE COUNT-UP on the proof numbers
+   Reads whatever you typed, animates the digits, keeps the rest.
+   "$250K" counts the 250. "0.742" keeps its three decimals.
+   ============================================================ */
+(function(){
+  var cells=$$('.proof-num'); if(!cells.length) return;
+  var cio=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var node=e.target; cio.unobserve(node);
+      var raw=node.getAttribute('data-target')||node.textContent;
+      var m=raw.match(/-?[0-9][0-9,]*(\.[0-9]+)?/);
+      if(!m||reduced.matches){node.textContent=raw;return}
+      var numText=m[0], pre=raw.slice(0,m.index), post=raw.slice(m.index+numText.length);
+      var dec=(numText.split('.')[1]||'').length;
+      var target=parseFloat(numText.replace(/,/g,''));
+      var grouped=numText.indexOf(',')>-1;
+      var t0=0,last='';
+      function fmt(v){
+        var s=dec?v.toFixed(dec):String(Math.round(v));
+        if(grouped) s=s.replace(/\B(?=(\d{3})+(?!\d))/g,',');
+        return pre+s+post;
+      }
+      function step(now){
+        if(!t0) t0=now;
+        var k=clamp((now-t0)/1150,0,1);
+        k=1-Math.pow(1-k,3);                       // ease out, lands softly
+        var out=fmt(target*k);
+        if(out!==last){last=out;node.textContent=out}
+        if(k<1) requestAnimationFrame(step);
+      }
+      node.textContent=fmt(0);
+      requestAnimationFrame(step);
+    });
+  },{threshold:.55});
+  cells.forEach(function(c){cio.observe(c)});
+})();
+
+/* ============================================================
+   8. THE EXPERIENCE TRACE LINE
+   ============================================================ */
+var railDrive=(function(){
+  var rail=$('#rail'),svg=$('#railSvg'),path=$('#railPath');
+  if(!rail||!path) return {upd:function(){},pin:function(){}};
+  var len=path.getTotalLength();
+  path.style.setProperty('--len',len);
+  var dots=[];
+  // one dot per role, placed on the real rows rather than at guessed heights
+  $$('.job',rail).forEach(function(){
+    var c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('class','rail-dot');c.setAttribute('cx','30');c.setAttribute('r','4');
+    svg.appendChild(c);dots.push(c);
+  });
+  function placeDots(){
+    var rh=rail.offsetHeight; if(!rh) return;
+    $$('.job',rail).forEach(function(j,i){
+      if(dots[i]) dots[i].setAttribute('cy',(((j.offsetTop+j.offsetHeight/2)/rh)*1000).toFixed(1));
+    });
+  }
+  placeDots();
+  addEventListener('resize',placeDots,{passive:true});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(placeDots);
+  var lastD=-1;
+  function upd(){
+    var r=rail.getBoundingClientRect(),vh=innerHeight;
+    var d=clamp((vh*0.86-r.top)/(r.height*0.82),0,1);
+    if(Math.abs(d-lastD)<0.004) return;
+    lastD=d;
+    path.style.setProperty('--draw',d.toFixed(3));
+    dots.forEach(function(c,i){c.style.setProperty('--dot',d>(i+0.6)/(dots.length+0.4)?1:0)});
+  }
+  function pin(){lastD=1;path.style.setProperty('--draw',1);dots.forEach(function(c){c.style.setProperty('--dot',1)})}
+  return {upd:upd,pin:pin};
+})();
+addEventListener('scroll',function(){railDrive.upd()},{passive:true});
+addEventListener('resize',function(){railDrive.upd()},{passive:true});
+railDrive.upd();
+
+/* ============================================================
+   9. TEXT SPLITTING (seeded, identical on every load)
+   ============================================================ */
+$$('.split').forEach(function(node,idx){
+  var text=node.getAttribute('data-text')||'';
+  var spread=parseFloat(node.getAttribute('data-spread')||'0');
+  var r=rng(9001+idx*7919);
+  var sr=el('span','sr');sr.textContent=text;
+  var vis=el('span');vis.setAttribute('aria-hidden','true');
+  var words=text.split(' '),total=text.length,ci=0;
+  words.forEach(function(word,wi){
+    var w=el('span','w');
+    w.style.setProperty('--th',(wi/Math.max(1,words.length)*0.42+r()*0.06).toFixed(3));
+    for(var i=0;i<word.length;i++){
+      var c=el('span','c');c.textContent=word[i];
+      var th=spread?(ci/Math.max(1,total)*spread+r()*0.06):(r()*0.5);
+      c.style.setProperty('--th',th.toFixed(3));
+      c.style.setProperty('--jx',((r()<.5?-1:1)*(14+r()*26)).toFixed(0)+'px');
+      c.style.setProperty('--jy',((r()-.5)*44).toFixed(0)+'px');
+      c.style.setProperty('--jr',((r()-.5)*16).toFixed(1)+'deg');
+      w.appendChild(c);ci++;
+    }
+    vis.appendChild(w);
+    if(wi<words.length-1){
+      var sp=el('span','w');sp.textContent=' ';
+      sp.style.setProperty('--th',w.style.getPropertyValue('--th'));
+      vis.appendChild(sp);ci++;
+    }
+  });
+  node.textContent='';
+  node.appendChild(sr);node.appendChild(vis);
+});
+
+/* ============================================================
+   10. THE SCRUB HERO
+   ============================================================ */
+var VIDEO_URL='assets/hero-scrub.mp4',
+    POSTER_URL='assets/hero-poster.jpg',
+    ENDING_URL='assets/hero-ending.jpg',
+    VIDEO_BYTES=3383528;
+
+var heroWrap=$('#hero-wrap'),stage=$('#stage'),video=$('#hero'),
+    posterLayer=$('#poster'),ringEl=$('.ring circle:last-child'),ringWrap=$('#ringWrap');
+
+var bands=$$('.band').map(function(x){
+  return {el:x,a:parseFloat(x.getAttribute('data-a')),b:parseFloat(x.getAttribute('data-b')),
+          ramp:parseFloat(x.getAttribute('data-ramp')||'0'),op:-1,k:-1};
+});
+
+function heroProgress(){
+  if(!heroWrap) return 0;
+  var r=heroWrap.getBoundingClientRect();
+  var range=heroWrap.offsetHeight-innerHeight;
+  if(range<=0) return 0;
+  return clamp(-r.top/range,0,1);
+}
+
+var loadK=0,loadStart=0;
+function tickLoadK(now){
+  if(!loadStart) loadStart=now;
+  loadK=clamp((now-loadStart)/900,0,1);
+  loadK=loadK*loadK*(3-2*loadK);
+  if(loadK<1) requestAnimationFrame(tickLoadK);
+  kick();
+}
+
+var lastPush=-1;
+function updatePush(p){
+  // a slow push into the frame as the camera descends. Small on purpose: it
+  // compounds the footage's own travel instead of competing with it.
+  var v=1+0.075*p;
+  if(Math.abs(v-lastPush)<0.002) return;
+  lastPush=v;
+  stage.style.setProperty('--push',v.toFixed(4));
+}
+
+function updateCaptions(p){
+  updatePush(p);
+  for(var i=0;i<bands.length;i++){
+    var b=bands[i],a=b.a,e=b.b;
+    var f=Math.min(0.02,(e-a)/3);
+    var inR=(i===0)?0:f, outR=(i===bands.length-1)?0:f;
+    var op=(inR?smoothstep(p,a,a+inR):(p>=a?1:0))*(outR?(1-smoothstep(p,e-outR,e)):(p<=e?1:0));
+    if(p<a) op=0; if(p>e) op=0;
+    var ramp=b.ramp||Math.min(0.025,(e-a)*0.35);
+    var k=clamp((p-a)/ramp,0,1);
+    if(i===0) k=Math.max(k,loadK);
+    if(Math.abs(op-b.op)>0.004){b.op=op;b.el.style.opacity=op}
+    if(Math.abs(k-b.k)>0.008){b.k=k;b.el.style.setProperty('--k',k.toFixed(3))}
+  }
+}
+
+var seekBusy=false,pendingTime=null;
+function requestSeek(t){
+  if(!video.duration||isNaN(video.duration)) return;
+  if(seekBusy){pendingTime=t;return}
+  seekBusy=true;
+  try{video.currentTime=t}catch(err){seekBusy=false}
+}
+video.addEventListener('seeked',function(){
+  seekBusy=false;
+  if(pendingTime!==null){var t=pendingTime;pendingTime=null;requestSeek(t)}
+});
+video.addEventListener('error',function(){seekBusy=false;pendingTime=null;failVideo()});
+
+var target=0,shown=0,rafId=null,lastTick=0,heroOnScreen=true;
+function tick(now){
+  var dt=Math.min(100,now-(lastTick||now));lastTick=now;
+  var k=0.16;
+  shown+=(target-shown)*(1-Math.pow(1-k,dt/16.667));
+  if(Math.abs(target-shown)<0.0005){shown=target;rafId=null;lastTick=0}
+  else rafId=requestAnimationFrame(tick);
+  if(video.duration) requestSeek(shown*video.duration);
+  updateCaptions(shown);
+}
+function kick(){if(rafId===null&&heroOnScreen&&scrubOn) rafId=requestAnimationFrame(tick)}
+function onScroll(){target=heroProgress();kick()}
+
+if(heroWrap){
+  new IntersectionObserver(function(es){
+    heroOnScreen=es[0].isIntersecting;
+    if(heroOnScreen) kick();
+  },{threshold:0}).observe(heroWrap);
+}
+
+var heroInit=false;
+function initHeroOnce(){
+  if(heroInit) return; heroInit=true;
+  posterLayer.style.backgroundImage="url('"+POSTER_URL+"')";
+  var started=false;
+  function startBlobFetch(){if(started)return;started=true;loadHeroBlob().catch(failVideo)}
+  var pi=new Image();
+  pi.onload=function(){stage.classList.add('poster-ready');startBlobFetch()};
+  pi.onerror=startBlobFetch;
+  pi.src=POSTER_URL;
+  setTimeout(startBlobFetch,4000);
+  requestAnimationFrame(tickLoadK);
+}
+
+async function loadHeroBlob(){
+  var ctrl=new AbortController();
+  var watchdog=setTimeout(function(){ctrl.abort()},20000);
+  var res=await fetch(VIDEO_URL,{priority:'low',signal:ctrl.signal});
+  if(!res.ok) throw new Error('video '+res.status);
+  var total=Number(res.headers.get('Content-Length'))||VIDEO_BYTES;
+  var reader=res.body.getReader(),chunks=[],got=0,lastRing=0;
+  for(;;){
+    var rd=await reader.read();
+    if(rd.done) break;
+    clearTimeout(watchdog);
+    watchdog=setTimeout(function(){ctrl.abort()},20000);
+    chunks.push(rd.value);got+=rd.value.length;
+    var frac=Math.min(1,got/total),now=performance.now();
+    if(now-lastRing>100||frac===1){
+      lastRing=now;
+      if(ringEl) ringEl.style.setProperty('--ld',Math.round(126*(1-frac)));
+    }
+  }
+  clearTimeout(watchdog);
+  if(ringEl) ringEl.style.setProperty('--ld',0);
+  video.src=URL.createObjectURL(new Blob(chunks));
+  video.load();
+  video.addEventListener('canplay',function(){
+    requestSeek(heroProgress()*video.duration);
+    stage.classList.add('video-ready');
+  },{once:true});
+}
+
+function failVideo(){
+  if(stage.classList.contains('video-failed')) return;
+  stage.classList.add('video-failed');
+  if(ringWrap){
+    ringWrap.innerHTML='<div class="chev"></div><span class="ring-label">Scroll</span>';
+    ringWrap.style.opacity='1';
+  }
+}
+
+/* Four of the five gates are size and pointer questions, so they stay media
+   queries. The fifth is the motion decision, which the visitor can now own. */
+var GATES=[
+  '(max-width: 720px)',
+  '(orientation: portrait) and (max-width: 1024px)',
+  '(orientation: portrait) and (pointer: coarse)',
+  '(orientation: landscape) and (pointer: coarse) and (max-height: 560px)'
+];
+function heroGated(){
+  return motion.matches || GATES.some(function(q){return matchMedia(q).matches});
+}
+var scrubOn=false,staticLoaded=false;
+function loadStaticImage(){
+  if(staticLoaded) return; staticLoaded=true;
+  var sh=$('#staticHero'),n=$('#shImg');
+  var im=new Image();
+  im.onload=function(){n.style.backgroundImage="url('"+ENDING_URL+"')";sh.classList.add('img-ready')};
+  im.src=ENDING_URL;
+}
+function enableScrub(){
+  if(scrubOn) return; scrubOn=true;
+  initHeroOnce();
+  addEventListener('scroll',onScroll,{passive:true});
+  bands.forEach(function(b){b.op=-1;b.k=-1});
+  unpinFinalStates();
+  updateCaptions(heroProgress());
+  onScroll();
+}
+function disableScrub(){
+  if(!scrubOn) return; scrubOn=false;
+  removeEventListener('scroll',onScroll);
+  if(rafId!==null){cancelAnimationFrame(rafId);rafId=null}
+  loadStaticImage();
+}
+function applyHeroMode(){
+  if(heroGated()) disableScrub();
+  else enableScrub();
+}
+GATES.map(function(q){return matchMedia(q)}).forEach(function(m){m.addEventListener('change',applyHeroMode)});
+
+/* ============================================================
+   11. REDUCED MOTION, live and in both directions
+   ============================================================ */
+function pinToFinalStates(){
+  railDrive.pin();
+  $$('.rise,.stagger,.sec-head').forEach(function(x){x.classList.add('in');x.classList.add('done')});
+  $$('.ret').forEach(function(r){r.classList.add('ret-on')});
+  inspection.finish(true);
+  if(window.__pinJobs) window.__pinJobs();
+  $$('.shot video,.lb-media video').forEach(function(v){try{v.pause()}catch(e){}});
+}
+function unpinFinalStates(){
+  railDrive.upd();
+}
+motion.onChange(function(off){
+  if(off) pinToFinalStates();
+  else { unpinFinalStates(); applyHeroMode(); }
+});
+(function(){
+  var b=document.getElementById('motionToggle');
+  if(!b) return;
+  b.addEventListener('click',function(){ motion.toggle() });
+  motion.apply();          // set the label and aria state on first load too
+})();
+
+/* ============================================================
+   12. THE INSPECTION (the one interactive moment)
+   ============================================================ */
+var inspection=(function(){
+  var root=$('#insp'),svg=$('#inspSvg'),btn=$('#holdBtn'),
+      label=$('#holdLabel'),count=$('#inspCount'),line=$('.scanline');
+  if(!root) return {finish:function(){}};
+  var W=800,H=350,COLS=20,ROWS=9,pts=[],bad=[],found=0,done=false;
+  var r=rng(4041),ns='http://www.w3.org/2000/svg';
+  for(var y=0;y<ROWS;y++)for(var x=0;x<COLS;x++){
+    var cx=(x+0.5)*(W/COLS)+(r()-.5)*7, cy=(y+0.5)*(H/ROWS)+(r()-.5)*7;
+    var c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',cx.toFixed(1));c.setAttribute('cy',cy.toFixed(1));
+    c.setAttribute('r','2.6');c.setAttribute('class','pt');
+    svg.appendChild(c);
+    pts.push({el:c,x:cx,y:cy,bad:false,hit:false});
+  }
+  [18,61,102,151].forEach(function(i){
+    var p=pts[(i+Math.floor(r()*5))%pts.length];
+    p.bad=true;
+    var ring=document.createElementNS(ns,'circle');
+    ring.setAttribute('cx',p.x.toFixed(1));ring.setAttribute('cy',p.y.toFixed(1));
+    ring.setAttribute('r','9');ring.setAttribute('class','pt-ring');
+    svg.appendChild(ring);p.ring=ring;bad.push(p);
+  });
+  bad.sort(function(a,b){return a.y-b.y});
+
+  var sp=0,raf=null,holding=false,lastT=0;
+  function setSp(v){
+    sp=v;
+    root.style.setProperty('--sp',v.toFixed(4));
+    if(line) line.style.setProperty('--sp',v.toFixed(4));
+    btn.style.setProperty('--sp',v.toFixed(4));
+    var lim=v*H;
+    for(var i=0;i<bad.length;i++){
+      var p=bad[i];
+      if(!p.hit&&p.y<=lim){
+        p.hit=true;p.el.classList.add('bad');p.el.setAttribute('r','4.2');
+        p.ring.classList.add('on');
+        found++;count.textContent=found+' / 4';
+      }
+    }
+    if((found>=bad.length||v>=1)&&!done) finish(false);
+  }
+  function loop(now){
+    var dt=Math.min(100,now-(lastT||now));lastT=now;
+    if(holding) sp=Math.min(1,sp+dt/2200);
+    else sp=Math.max(0,sp-(dt/620)*(0.3+0.7*sp));
+    setSp(sp);
+    if((holding&&sp<1)||(!holding&&sp>0.001)) raf=requestAnimationFrame(loop);
+    else {if(!holding) setSp(0); raf=null;lastT=0}
+  }
+  function go(){lastT=0;if(raf===null) raf=requestAnimationFrame(loop)}
+  // running it once and leaving a dead button reads as broken. Pressing it
+  // again clears the board and runs the scan from the top.
+  function reset(){
+    done=false;found=0;
+    bad.forEach(function(p){
+      p.hit=false;p.el.classList.remove('bad');p.el.setAttribute('r','2.6');
+      p.ring.classList.remove('on');
+    });
+    count.textContent='0 / 4';
+    btn.removeAttribute('aria-disabled');
+    root.classList.remove('done');
+    setSp(0);
+  }
+  function down(e){
+    if(e&&e.preventDefault) e.preventDefault();
+    if(done) reset();
+    holding=true;root.classList.add('armed');label.textContent='Scanning';go();
+  }
+  function up(){
+    if(done) return;
+    holding=false;label.textContent='Hold to scan';go();
+  }
+  function finish(instant){
+    done=true;holding=false;
+    if(instant&&raf!==null){cancelAnimationFrame(raf);raf=null}
+    root.classList.add('armed','done');
+    bad.forEach(function(p){
+      if(!p.hit){p.hit=true;p.el.classList.add('bad');p.el.setAttribute('r','4.2');p.ring.classList.add('on')}
+    });
+    found=4;count.textContent='4 / 4';
+    label.textContent='Board clear. Run it again';
+    btn.setAttribute('aria-disabled','true');
+    root.style.setProperty('--sp','1');btn.style.setProperty('--sp','1');
+    if(line) line.style.setProperty('--sp','1');
+  }
+  btn.addEventListener('pointerdown',down);
+  addEventListener('pointerup',up);
+  addEventListener('pointercancel',up);
+  btn.addEventListener('keydown',function(e){if(e.key===' '||e.key==='Enter'){e.preventDefault();down(e)}});
+  btn.addEventListener('keyup',function(e){if(e.key===' '||e.key==='Enter') up()});
+  if(reduced.matches) finish(true);
+  return {finish:finish};
+})();
+
+/* ============================================================
+   13. PROJECTS: filters and the detail panel
+   ============================================================ */
+(function(){
+  var grid=$('#grid'); if(!grid) return;
+  var PR=SITE.projects||[];
+  var openId=null;
+  var detail=el('div','detail');detail.id='detailPanel';
+  grid.appendChild(detail);
+
+  function render(p){
+    detail.innerHTML=
+      '<div class="detail-in">'+
+        '<div class="detail-top"><h3>'+esc(p.title)+'</h3>'+
+          '<button class="detail-close" type="button">Close</button></div>'+
+        '<div class="detail-proves"><b>What it proves:</b> '+esc(p.proves)+'</div>'+
+        '<div class="detail-body">'+
+          '<div>'+(p.ctx||[]).map(function(c){return '<p>'+esc(c)+'</p>'}).join('')+
+            '<ul class="detail-list">'+(p.pts||[]).map(function(x){
+              return '<li>'+(x[0]?'<b>'+esc(x[0])+':</b> ':'')+esc(x[1])+'</li>'}).join('')+'</ul>'+
+            '<div class="detail-meta">'+(p.tags||[]).map(function(t){return '<span class="card-tag">'+esc(t)+'</span>'}).join('')+'</div>'+
+          '</div>'+
+          '<div>'+shotsHTML(p.shots,p.title)+'</div>'+
+        '</div>'+
+      '</div>';
+    $('.detail-close',detail).addEventListener('click',function(){close(true)});
+    if(!reduced.matches) $$('video',detail).forEach(function(v){v.play().catch(function(){})});
+  }
+  function place(card){
+    var cards=$$('.card',grid).filter(function(c){return !c.hidden});
+    var top=card.offsetTop,rowLast=card;
+    cards.forEach(function(c){if(c.offsetTop===top) rowLast=c});
+    grid.insertBefore(detail,rowLast.nextSibling);
+  }
+  function open(id){
+    var p=null;for(var i=0;i<PR.length;i++) if(PR[i].id===id) p=PR[i];
+    if(!p) return;
+    var card=$('.card[data-id="'+id+'"]',grid);
+    $$('.card',grid).forEach(function(c){c.setAttribute('aria-expanded',c===card?'true':'false')});
+    openId=id;place(card);render(p);
+    detail.classList.add('open');
+    detail.style.height=detail.firstChild.offsetHeight+'px';
+    setTimeout(function(){if(openId===id) detail.style.height='auto'},640);
+  }
+  function close(focus){
+    if(!openId) return;
+    var card=$('.card[data-id="'+openId+'"]',grid);
+    detail.style.height=detail.firstChild.offsetHeight+'px';
+    void detail.offsetHeight;
+    detail.classList.remove('open');
+    detail.style.height='0px';
+    $$('video',detail).forEach(function(v){try{v.pause()}catch(e){}});
+    if(card){card.setAttribute('aria-expanded','false');if(focus) card.focus()}
+    openId=null;
+    setTimeout(function(){if(!openId) detail.innerHTML=''},640);
+  }
+  grid.addEventListener('click',function(e){
+    if(e.target.closest('.shot')) return;          // gallery clicks belong to the viewer
+    var card=e.target.closest('.card');
+    if(!card) return;
+    var id=card.getAttribute('data-id');
+    withTransition(function(){ if(openId===id) close(true); else open(id) });
+  });
+  addEventListener('keydown',function(e){if(e.key==='Escape'&&!lbOpen()) close(true)});
+
+  $$('.filt').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var cat=btn.getAttribute('data-cat');
+      $$('.filt').forEach(function(b){b.setAttribute('aria-pressed',b===btn?'true':'false')});
+      close(false);
+      $$('.card',grid).forEach(function(c){
+        c.hidden=!(cat==='all'||c.getAttribute('data-cat')===cat);
+      });
+    });
+  });
+
+  var cio=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var r=$('.ret',e.target); if(r) r.classList.add('ret-on');
+      cio.unobserve(e.target);
+    });
+  },{rootMargin:'0px 0px -8% 0px',threshold:.2});
+  $$('.card',grid).forEach(function(c){cio.observe(c)});
+})();
+
+/* ============================================================
+   14. THE PICTURE VIEWER
+   One viewer for every gallery on the site, so adding pictures anywhere
+   needs no extra wiring.
+   ============================================================ */
+var lbOpen;
+(function(){
+  var box=$('#lightbox'),media=$('#lbMedia'),capText=$('#lbText'),capCount=$('#lbCount'),
+      prev=$('#lbPrev'),next=$('#lbNext'),closeBtn=$('#lbClose');
+  var cur=null,idx=0,lastFocus=null;
+  lbOpen=function(){return !box.hidden};
+
+  function show(){
+    var it=cur.items[idx],kind=it[0],file=it[1],cap=it[2]||'';
+    var src=(kind==='vid'?'assets/gif/':'assets/img/')+file;
+    media.innerHTML = kind==='vid'
+      ? '<video src="'+esc(src)+'" controls autoplay muted loop playsinline></video>'
+      : '<img src="'+esc(src)+'" alt="'+esc(cap)+'">';
+    capText.textContent=cap;
+    capCount.textContent=(idx+1)+' / '+cur.items.length+(cur.label?'  ·  '+cur.label:'');
+    var many=cur.items.length>1;
+    prev.hidden=!many; next.hidden=!many;
+  }
+  function open(g,i){
+    cur=GALLERIES[g]; if(!cur) return;
+    idx=i||0; lastFocus=document.activeElement;
+    box.hidden=false; document.body.classList.add('lb-open');
+    requestAnimationFrame(function(){box.classList.add('on')});
+    show(); closeBtn.focus();
+  }
+  function close(){
+    box.classList.remove('on');
+    document.body.classList.remove('lb-open');
+    setTimeout(function(){box.hidden=true;media.innerHTML=''},320);
+    if(lastFocus&&lastFocus.focus) lastFocus.focus();
+  }
+  function step(d){ idx=(idx+d+cur.items.length)%cur.items.length; show() }
+
+  document.addEventListener('click',function(e){
+    var fig=e.target.closest('.shot');
+    if(fig){
+      e.preventDefault(); e.stopPropagation();
+      var wrap=fig.closest('.shots');
+      open(+wrap.getAttribute('data-gallery'), +fig.getAttribute('data-i'));
+    }
+  });
+  document.addEventListener('keydown',function(e){
+    var fig=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.shot');
+    if(fig&&(e.key==='Enter'||e.key===' ')){
+      e.preventDefault();
+      open(+fig.closest('.shots').getAttribute('data-gallery'), +fig.getAttribute('data-i'));
+      return;
+    }
+    if(box.hidden) return;
+    if(e.key==='Escape'){e.preventDefault();close()}
+    else if(e.key==='ArrowRight'){e.preventDefault();step(1)}
+    else if(e.key==='ArrowLeft'){e.preventDefault();step(-1)}
+  });
+  closeBtn.addEventListener('click',close);
+  prev.addEventListener('click',function(){step(-1)});
+  next.addEventListener('click',function(){step(1)});
+  box.addEventListener('click',function(e){if(e.target===box) close()});
+})();
+
+/* ============================================================
+   15. THE SCROLL INSTRUMENT
+   ============================================================ */
+(function(){
+  var railBox=$('#scrollRail'),fill=$('#scrollFill'),ticks=$('#scrollTicks');
+  if(!railBox) return;
+  var secs=$$('main section[id]').map(function(s){
+    return {id:s.id,el:s,label:(($('.kick',s)||{}).textContent||s.id).split('/').pop().trim()};
+  });
+  var btns=secs.map(function(s,i){
+    var b=el('button','rail-tick','<span>'+esc(s.label)+'</span>');
+    b.type='button';b.setAttribute('aria-label','Jump to '+s.label);
+    b.style.top=((i+0.5)/secs.length*100).toFixed(2)+'%';
+    ticks.appendChild(b);return b;
+  });
+  var lastP=-1,lastActive=-1,jumpTo=null,jumpAt=0;
+
+  // a section's real distance from the top of the document. offsetTop is
+  // relative to the nearest positioned ancestor, which is not the document
+  // here, so it reported the wrong section.
+  function topOf(node){ return node.getBoundingClientRect().top+scrollY }
+
+  // -1 while the reader is still up in the hero, so the first press of j
+  // lands on the first section rather than skipping past it
+  function currentIndex(){
+    var mid=scrollY+innerHeight*0.4,active=-1;
+    for(var i=0;i<secs.length;i++){ if(topOf(secs[i].el)<=mid) active=i }
+    return active;
+  }
+  function upd(){
+    var h=document.documentElement.scrollHeight-innerHeight;
+    var p=h>0?clamp(scrollY/h,0,1):0;
+    if(Math.abs(p-lastP)>0.002){
+      lastP=p;
+      fill.style.setProperty('--sp',p.toFixed(4));
+      railBox.classList.toggle('on',scrollY>innerHeight*0.6);
+    }
+    var active=currentIndex();
+    if(active!==lastActive){
+      lastActive=active;
+      btns.forEach(function(b,i){b.setAttribute('aria-current',i===active?'true':'false')});
+    }
+  }
+  addEventListener('scroll',upd,{passive:true});
+  addEventListener('resize',upd,{passive:true});
+  upd();
+
+  // index -1 means the top of the page, so k from the first section takes the
+  // reader back up into the hero instead of dead-ending
+  function jump(i){
+    i=clamp(i,-1,secs.length-1);
+    jumpTo=i; jumpAt=performance.now();
+    var how={behavior:reduced.matches?'auto':'smooth'};
+    if(i<0) scrollTo(Object.assign({top:0},how));
+    else secs[i].el.scrollIntoView(how);
+  }
+  btns.forEach(function(b,i){b.addEventListener('click',function(){jump(i)})});
+
+  // keyboard: step between sections without reaching for the mouse.
+  // While a smooth scroll is still travelling, step from where we asked to go,
+  // not from where the page happens to be halfway through the animation.
+  addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    var t=e.target.tagName;
+    if(t==='INPUT'||t==='TEXTAREA'||lbOpen()) return;
+    var d = (e.key==='j'||e.key==='J') ? 1 : (e.key==='k'||e.key==='K') ? -1 : 0;
+    if(!d) return;
+    e.preventDefault();
+    var base=(jumpTo!==null&&performance.now()-jumpAt<1200)?jumpTo:currentIndex();
+    jump(base+d);
+  });
+})();
+
+/* ============================================================
+   16. CARD DEPTH and the hero's cursor light
+   Transform and opacity only, fine pointers only, off under reduced motion.
+   ============================================================ */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  var pending=null,frame=null;
+  function flush(){
+    frame=null;
+    if(!pending) return;
+    var c=pending.card,r=pending.rect,x=pending.x,y=pending.y;
+    var px=(x-r.left)/r.width, py=(y-r.top)/r.height;
+    c.style.setProperty('--ry',((px-0.5)*7).toFixed(2)+'deg');
+    c.style.setProperty('--rx',((0.5-py)*5).toFixed(2)+'deg');
+    c.style.setProperty('--gx',(px*100).toFixed(1)+'%');
+    c.style.setProperty('--gy',(py*100).toFixed(1)+'%');
+  }
+  document.addEventListener('mousemove',function(e){
+    if(reduced.matches) return;
+    var card=e.target.closest&&e.target.closest('.card');
+    if(!card) return;
+    if(!card.classList.contains('tilting')){card.classList.add('tilting');card.style.setProperty('--gl',1)}
+    pending={card:card,rect:card.getBoundingClientRect(),x:e.clientX,y:e.clientY};
+    if(frame===null) frame=requestAnimationFrame(flush);
+  },{passive:true});
+  document.addEventListener('mouseout',function(e){
+    var card=e.target.closest&&e.target.closest('.card');
+    if(card&&!(e.relatedTarget&&card.contains(e.relatedTarget))){
+      card.classList.remove('tilting');
+      card.style.setProperty('--rx','0deg');card.style.setProperty('--ry','0deg');
+      card.style.setProperty('--gl',0);
+    }
+  });
+
+  // the hero's soft cursor light
+  var glow=el('div','cursor-glow');glow.setAttribute('aria-hidden','true');
+  if(stage) stage.insertBefore(glow,$('.bands',stage));
+  var gp=null,gf=null;
+  function gflush(){
+    gf=null; if(!gp||!stage) return;
+    glow.style.setProperty('--cx',gp[0].toFixed(1)+'%');
+    glow.style.setProperty('--cy',gp[1].toFixed(1)+'%');
+  }
+  if(stage){
+    stage.addEventListener('mousemove',function(e){
+      if(reduced.matches) return;
+      var r=stage.getBoundingClientRect();
+      gp=[((e.clientX-r.left)/r.width)*100,((e.clientY-r.top)/r.height)*100];
+      stage.classList.add('glow-on');
+      if(gf===null) gf=requestAnimationFrame(gflush);
+    },{passive:true});
+    stage.addEventListener('mouseleave',function(){stage.classList.remove('glow-on')});
+  }
+})();
+
+/* ============================================================
+   17. THE EXPERIENCE CARDS
+   One open at a time. The panel grows to its real height, the gutter line
+   draws itself down, and the contents arrive in sequence rather than all at
+   once, so opening one reads as arriving somewhere.
+   ============================================================ */
+(function(){
+  var jobs=$$('.job'); if(!jobs.length) return;
+  var settleTimers=new WeakMap();
+
+  function closeJob(job,instant){
+    var panel=$('.job-detail',job); if(!panel) return;
+    var head=$('.job-head',job);
+    job.setAttribute('data-open','0');
+    job.classList.remove('settled');
+    if(head) head.setAttribute('aria-expanded','false');
+    if(instant){panel.style.height='0px';return}
+    panel.style.height=panel.firstChild.offsetHeight+'px';
+    void panel.offsetHeight;
+    panel.style.height='0px';
+    $$('video',panel).forEach(function(v){try{v.pause()}catch(e){}});
+    clearTimeout(settleTimers.get(job));
+  }
+  function openJob(job){
+    var panel=$('.job-detail',job); if(!panel) return;
+    var head=$('.job-head',job);
+    jobs.forEach(function(o){if(o!==job&&o.getAttribute('data-open')==='1') closeJob(o)});
+    job.setAttribute('data-open','1');
+    if(head) head.setAttribute('aria-expanded','true');
+    panel.style.height=panel.firstChild.offsetHeight+'px';
+    // let it settle to auto so a resize or an image loading later cannot clip it
+    clearTimeout(settleTimers.get(job));
+    settleTimers.set(job,setTimeout(function(){
+      if(job.getAttribute('data-open')==='1'){
+        panel.style.height='auto';
+        job.classList.add('settled');
+      }
+    },700));
+  }
+
+  jobs.forEach(function(job){
+    var head=$('.job-head',job);
+    if(!head||head.disabled) return;
+    head.addEventListener('click',function(){
+      if(job.getAttribute('data-open')==='1'){ withTransition(function(){ closeJob(job) }); }
+      else {
+        withTransition(function(){ openJob(job) });
+        // if the card has scrolled up out of view, bring its top back
+        var top=job.getBoundingClientRect().top;
+        if(top<70) job.scrollIntoView({behavior:reduced.matches?'auto':'smooth',block:'start'});
+      }
+    });
+  });
+
+  // reduced motion: everything open, nothing animating
+  function pinJobs(){
+    jobs.forEach(function(job){
+      var panel=$('.job-detail',job); if(!panel) return;
+      job.setAttribute('data-open','1');
+      job.classList.add('settled');
+      panel.style.height='auto';
+      var head=$('.job-head',job); if(head) head.setAttribute('aria-expanded','true');
+    });
+  }
+  window.__pinJobs=pinJobs;
+  if(reduced.matches) pinJobs();
+  addEventListener('resize',function(){
+    jobs.forEach(function(job){
+      if(job.getAttribute('data-open')==='1'&&job.classList.contains('settled')){
+        var panel=$('.job-detail',job); if(panel) panel.style.height='auto';
+      }
+    });
+  },{passive:true});
+})();
+
+/* ============================================================
+   17. FAQ
+   ============================================================ */
+$$('.qa').forEach(function(qa){
+  var q=$('.qa-q',qa),a=$('.qa-a',qa),p=$('p',a);
+  q.addEventListener('click',function(){
+    var open=qa.getAttribute('data-open')==='1';
+    $$('.qa').forEach(function(o){
+      if(o===qa) return;
+      o.setAttribute('data-open','0');
+      $('.qa-q',o).setAttribute('aria-expanded','false');
+      $('.qa-a',o).style.height='0px';
+    });
+    qa.setAttribute('data-open',open?'0':'1');
+    q.setAttribute('aria-expanded',open?'false':'true');
+    a.style.height=open?'0px':(p.offsetHeight+'px');
+  });
+});
+
+/* ============================================================
+   18. THE FORM (mailto, and it says so)
+   ============================================================ */
+(function(){
+  var form=$('#form'),ok=$('#formOk'); if(!form) return;
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var n=$('#f-name').value.trim(),em=$('#f-email').value.trim(),m=$('#f-msg').value.trim();
+    if(!n||!em||!m){
+      [['#f-name',n],['#f-email',em],['#f-msg',m]].forEach(function(pair){
+        if(!pair[1]) $(pair[0]).style.borderColor='var(--accent)';
+      });
+      return;
+    }
+    ok.classList.add('on');
+    ok.style.height=ok.scrollHeight+'px';
+    location.href='mailto:'+(ID.email||'')+
+      '?subject='+encodeURIComponent('Portfolio enquiry from '+n)+
+      '&body='+encodeURIComponent(m+'\n\n'+n+'\n'+em);
+  });
+  $$('#form input,#form textarea').forEach(function(x){
+    x.addEventListener('input',function(){x.style.borderColor=''});
+  });
+})();
+
+/* ============================================================
+   19. PAUSE EVERYTHING ON A HIDDEN TAB
+   ============================================================ */
+document.addEventListener('visibilitychange',function(){
+  document.body.classList.toggle('paused',document.hidden);
+  if(document.hidden) $$('.shot video,.lb-media video,.detail video').forEach(function(v){try{v.pause()}catch(e){}});
+});
+
+/* ============================================================
+   20. MAGNETIC BUTTONS
+   The call to action leans toward the cursor as it approaches. Small enough
+   that it reads as responsiveness rather than as a trick.
+   ============================================================ */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  var frame=null,pending=null;
+  function flush(){
+    frame=null; if(!pending) return;
+    var b=pending.b,r=pending.r;
+    var dx=(pending.x-(r.left+r.width/2))/r.width;
+    var dy=(pending.y-(r.top+r.height/2))/r.height;
+    b.style.setProperty('--mx',(dx*10).toFixed(1)+'px');
+    b.style.setProperty('--my',(dy*7).toFixed(1)+'px');
+  }
+  document.addEventListener('mousemove',function(e){
+    if(reduced.matches) return;
+    var b=e.target.closest&&e.target.closest('.btn');
+    if(!b) return;
+    b.classList.add('magnetic');
+    pending={b:b,r:b.getBoundingClientRect(),x:e.clientX,y:e.clientY};
+    if(frame===null) frame=requestAnimationFrame(flush);
+  },{passive:true});
+  document.addEventListener('mouseout',function(e){
+    var b=e.target.closest&&e.target.closest('.btn');
+    if(b&&!(e.relatedTarget&&b.contains(e.relatedTarget))){
+      b.style.setProperty('--mx','0px');b.style.setProperty('--my','0px');
+      setTimeout(function(){b.classList.remove('magnetic')},200);
+    }
+  });
+})();
+
+/* ============================================================
+   21. THE RETICLE CURSOR
+   The signature element becomes the pointer, and locks onto whatever it is
+   over. Fine pointers only, off when motion is off, and it never swallows a
+   click because it is pointer-events:none the whole way through.
+   ============================================================ */
+(function(){
+  var cur=$('#cur');
+  if(!cur||!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  var x=-100,y=-100,tx=-100,ty=-100,raf=null,shown=false;
+  var LOCK='a,button,.card,.shot,.filt,.qa-q,.job-head,.rail-tick,.motion-toggle,summary';
+
+  function draw(){
+    raf=null;
+    // a touch of lag on the brackets reads as weight rather than as sluggishness
+    x+=(tx-x)*0.32; y+=(ty-y)*0.32;
+    // ease a fraction of the way toward a small target's centre
+    var sx=parseFloat(cur.style.getPropertyValue('--snapx'))||0;
+    var sy=parseFloat(cur.style.getPropertyValue('--snapy'))||0;
+    cur.style.setProperty('--x',(x+sx*0.34).toFixed(1)+'px');
+    cur.style.setProperty('--y',(y+sy*0.34).toFixed(1)+'px');
+    raf=requestAnimationFrame(draw);   // keeps running so the snap stays live
+  }
+  function move(e){
+    if(motion.matches) return;
+    tx=e.clientX; ty=e.clientY;
+    if(!shown){shown=true;cur.classList.add('on');x=tx;y=ty}
+    var t=e.target;
+    var overText=t&&t.closest&&t.closest('input,textarea');
+    var overLock=t&&t.closest&&t.closest(LOCK);
+    cur.classList.toggle('text',!!overText);
+    cur.classList.toggle('locked',!!overLock&&!overText);
+    if(raf===null) raf=requestAnimationFrame(draw);
+  }
+  addEventListener('mousemove',move,{passive:true});
+  addEventListener('mousedown',function(){cur.classList.add('down')});
+  addEventListener('mouseup',function(){cur.classList.remove('down')});
+  addEventListener('mouseleave',function(){
+    shown=false;cur.classList.remove('on');
+    if(raf!==null){cancelAnimationFrame(raf);raf=null}
+  });
+  addEventListener('blur',function(){shown=false;cur.classList.remove('on')});
+  motion.onChange(function(off){ if(off){shown=false;cur.classList.remove('on')} });
+})();
+
+/* ============================================================
+   22. THE RESOLVE
+   Section headings arrive as noise and settle into their letters. It is the
+   site's one idea, performed by the type: something unreadable becomes
+   something you can act on.
+   ============================================================ */
+(function(){
+  var GLYPHS='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/\\<>[]{}=+*#';
+  var targets=$$('.sec-head h2, .band-col .sub');
+  if(!targets.length) return;
+
+  function prepare(node){
+    if(node.dataset.res) return;
+    node.dataset.res='1';
+    var text=node.textContent;
+    node.dataset.text=text;
+  }
+  function resolve(node){
+    var text=node.dataset.text||node.textContent;
+    if(motion.matches){node.textContent=text;return}
+    var chars=text.split('');
+    var wrap=document.createElement('span');
+    wrap.className='res';
+    var sr=el('span','sr');sr.textContent=text;
+    var vis=el('span');vis.setAttribute('aria-hidden','true');
+    var spans=chars.map(function(c){
+      var g=el('span','g');
+      if(c===' '){g.textContent=' ';g.dataset.fixed='1'}
+      else {g.textContent=c;g.dataset.ch=c}
+      vis.appendChild(g);return g;
+    });
+    wrap.appendChild(sr);wrap.appendChild(vis);
+    node.textContent='';node.appendChild(wrap);
+
+    var t0=0, DUR=620, STAG=26;
+    function frame(now){
+      if(!t0) t0=now;
+      var t=now-t0, done=true;
+      for(var i=0;i<spans.length;i++){
+        var g=spans[i];
+        if(g.dataset.fixed) continue;
+        var start=i*STAG, k=(t-start)/DUR;
+        if(k>=1){
+          if(g.classList.contains('noise')){g.classList.remove('noise');g.textContent=g.dataset.ch}
+          continue;
+        }
+        done=false;
+        if(k<0){ g.classList.add('noise'); g.textContent=GLYPHS[(i*7)%GLYPHS.length]; continue }
+        // settle down: swap characters less often as it approaches its letter
+        if(Math.random() > k*k){
+          g.classList.add('noise');
+          g.textContent=GLYPHS[(Math.random()*GLYPHS.length)|0];
+        } else {
+          g.classList.remove('noise'); g.textContent=g.dataset.ch;
+        }
+      }
+      if(!done) requestAnimationFrame(frame);
+      else spans.forEach(function(g){ if(!g.dataset.fixed){g.classList.remove('noise');g.textContent=g.dataset.ch} });
+    }
+    requestAnimationFrame(frame);
+  }
+
+  targets.forEach(prepare);
+  var rio=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting) return;
+      rio.unobserve(e.target);
+      resolve(e.target);
+    });
+  },{threshold:.5,rootMargin:'0px 0px -8% 0px'});
+  targets.forEach(function(t){
+    // the hero settle line is driven by scroll, so leave that one alone
+    if(t.closest('.band')) { return; }
+    rio.observe(t);
+  });
+})();
+
+/* ============================================================
+   23. VIEW TRANSITIONS
+   Where the browser has them, opening a project or a role crossfades the
+   whole layout instead of just growing a box. Everywhere else the existing
+   height animation still runs, unchanged.
+   ============================================================ */
+window.withTransition=function(fn){
+  if(motion.matches||!document.startViewTransition){ fn(); return }
+  try{ document.startViewTransition(fn) }catch(e){ fn() }
+};
+
+/* ============================================================
+   24. THE LATTICE REACTS TO SCROLL SPEED
+   Flick the page and the field stretches and brightens, then settles. It
+   makes the background feel like it is being moved through rather than
+   merely drawn.
+   ============================================================ */
+(function(){
+  var last=scrollY, vel=0, raf=null;
+  function tick(){
+    raf=null;
+    vel*=0.9;
+    document.documentElement.style.setProperty('--scrollvel',vel.toFixed(3));
+    if(Math.abs(vel)>0.004) raf=requestAnimationFrame(tick);
+    else document.documentElement.style.setProperty('--scrollvel','0');
+  }
+  addEventListener('scroll',function(){
+    if(motion.matches) return;
+    var d=scrollY-last; last=scrollY;
+    vel=Math.min(1,Math.abs(d)/90);
+    if(raf===null) raf=requestAnimationFrame(tick);
+  },{passive:true});
+})();
+
+/* ============================================================
+   25. THE SCAN REVEAL on pictures
+   Every picture on the site gets scanned in rather than faded in. One
+   observer, applied to whatever exists now and to anything rendered later.
+   ============================================================ */
+var scanIO=new IntersectionObserver(function(es){
+  es.forEach(function(e){
+    if(!e.isIntersecting) return;
+    var w=e.target;
+    // the scan line has to travel the picture's real height
+    w.style.setProperty('--sh',w.offsetHeight+'px');
+    w.classList.add('revealed');
+    scanIO.unobserve(w);
+  });
+},{threshold:.18,rootMargin:'0px 0px -6% 0px'});
+
+function armScans(root){
+  $$('.card-media, .shot, .portrait, .detail-shots figure',root||document).forEach(function(box){
+    if(box.dataset.scan) return;
+    box.dataset.scan='1';
+    box.classList.add('scanin');
+    scanIO.observe(box);
+  });
+}
+armScans();
+// galleries and project details are built on demand, so re-arm after each
+document.addEventListener('click',function(){ setTimeout(armScans,60) },true);
+
+/* ============================================================
+   26. THE READING HIGHLIGHT
+   The long About paragraph brightens word by word as you scroll it. Where the
+   browser has scroll timelines the compositor runs it; where it does not, an
+   observer lights the whole paragraph instead.
+   ============================================================ */
+(function(){
+  var host=$('#about .about-body p:not(.lede-big)');
+  if(!host||host.dataset.hl) return;
+  host.dataset.hl='1';
+  var text=host.textContent;
+  var sr=el('span','sr'); sr.textContent=text;
+  var vis=el('span'); vis.setAttribute('aria-hidden','true');
+  var words=text.split(/(\s+)/);
+  var real=words.filter(function(w){return w.trim()}).length, n=0;
+  words.forEach(function(w){
+    var sp=el('span','hw'); sp.textContent=w;
+    if(w.trim()){
+      // each word lights over its own slice of the paragraph's pass through view
+      var a=(n/real)*52+16, b=a+16;
+      sp.style.animationRange='cover '+a.toFixed(1)+'% cover '+b.toFixed(1)+'%';
+      n++;
+    }
+    vis.appendChild(sp);
+  });
+  host.textContent=''; host.className+=' hl';
+  host.appendChild(sr); host.appendChild(vis);
+
+  if(!CSS.supports('animation-timeline: view()')){
+    var io2=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ host.classList.add('lit'); io2.disconnect() } });
+    },{threshold:.35});
+    io2.observe(host);
+  }
+})();
+
+/* ============================================================
+   27. THE CURSOR SETTLES ONTO SMALL TARGETS
+   Over a small control the reticle eases toward its centre, so it feels like
+   it is locking on rather than merely hovering. Big targets are left alone,
+   because pulling a cursor across a whole card feels wrong.
+   ============================================================ */
+(function(){
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches) return;
+  var cur=$('#cur'); if(!cur) return;
+  var SNAP='button.filt, .rail-tick, .motion-toggle, .lb-nav, .lb-close, .job-toggle, .btn, .card-tag, .tag';
+  addEventListener('mousemove',function(e){
+    if(motion.matches) return;
+    var t=e.target.closest&&e.target.closest(SNAP);
+    if(!t){ cur.style.removeProperty('--snapx'); cur.style.removeProperty('--snapy'); return }
+    var r=t.getBoundingClientRect();
+    if(r.width>340||r.height>200) return;      // too big to be a target
+    cur.style.setProperty('--snapx',((r.left+r.width/2)-e.clientX).toFixed(1)+'px');
+    cur.style.setProperty('--snapy',((r.top+r.height/2)-e.clientY).toFixed(1)+'px');
+  },{passive:true});
+})();
+
+/* ============================================================
+   28. THE SCROLL CUE
+   The hero never moves on its own. It has to say so, or a visitor sits
+   looking at a still frame waiting for a video that is not coming. The cue
+   stays until the first scroll, and returns whenever they come back to the top.
+   ============================================================ */
+(function(){
+  var cue=$('#cue');
+  if(!cue||!stage) return;
+  var shown=false, lastAt=null;
+  function upd(){
+    if(!scrubOn){ if(shown){shown=false;stage.classList.remove('cue-on')} return }
+    var at = heroProgress() < 0.04;
+    if(at===lastAt) return;
+    lastAt=at; shown=at;
+    stage.classList.toggle('cue-on',at);
+  }
+  addEventListener('scroll',upd,{passive:true});
+  motion.onChange(function(){ lastAt=null; setTimeout(upd,60) });
+  // only offer it once the hero is actually ready to respond
+  function arm(){ lastAt=null; upd() }
+  if(video) video.addEventListener('canplay',arm,{once:true});
+  setTimeout(arm,1800);
+})();
+
+/* ============================================================
+   29. THE ONE-TIME DEMONSTRATION
+   Immediately after the footage is ready, if the visitor has not scrolled
+   yet, nudge the descent forward a little and let it fall back. It says
+   "this responds to you" far better than a label can, and it happens once.
+   ============================================================ */
+(function(){
+  if(!video||!stage) return;
+  var done=false;
+  function demo(){
+    if(done||!scrubOn||motion.matches) return;
+    if(scrollY>4||heroProgress()>0.02) return;    // they already started
+    done=true;
+    var t0=0, PEAK=0.055, DUR=2600;
+    function step(now){
+      if(!t0) t0=now;
+      var k=(now-t0)/DUR;
+      if(k>=1||scrollY>4){ target=heroProgress(); kick(); return }
+      // out and back, eased at both ends
+      var e=Math.sin(k*Math.PI);
+      target=PEAK*e*e;
+      kick();
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  video.addEventListener('canplay',function(){ setTimeout(demo,900) },{once:true});
+})();
+
+/* ============================================================
+   30. THE MOTION NOTICE
+   One quiet sentence on a first visit, saying what the page is about to do
+   and offering the way out. Also the only place the current setting is
+   stated in words, which matters once it is remembered across visits.
+   ============================================================ */
+(function(){
+  var box=$('#mnotice'), txt=$('#mnoticeText'), act=$('#mnoticeAct'), ok=$('#mnoticeOk');
+  if(!box) return;
+  function seen(){ try{ return localStorage.getItem('motionNoticeSeen')==='1' }catch(e){ return false } }
+  function markSeen(){ try{ localStorage.setItem('motionNoticeSeen','1') }catch(e){} }
+
+  function paint(){
+    var off=motion.matches;
+    txt.innerHTML = off
+      ? 'Motion is <b>off</b> on this site, so the hero is a still image and nothing animates.'
+      : 'This page <b>moves as you scroll</b>. The hero video is driven by your scrolling, and there is a drifting background.';
+    act.textContent = off ? 'Turn motion on' : 'Turn motion off';
+  }
+  function show(){ paint(); box.classList.add('on'); document.body.classList.add('notice-on') }
+  function hide(){ box.classList.remove('on'); document.body.classList.remove('notice-on'); markSeen() }
+
+  act.addEventListener('click',function(){ motion.toggle(); paint(); });
+  ok.addEventListener('click',hide);
+  addEventListener('keydown',function(e){ if(e.key==='Escape'&&box.classList.contains('on')) hide() });
+  motion.onChange(paint);
+
+  // wait for the page to settle, so it never competes with the first paint
+  if(!seen()) setTimeout(show,2600);
+
+  // if the setting is remembered as off from a previous visit, say so once per
+  // session, because a silently still site is exactly what confused us before
+  else if(motion.matches){
+    var told=false;
+    try{ told=sessionStorage.getItem('motionOffTold')==='1' }catch(e){}
+    if(!told){
+      try{ sessionStorage.setItem('motionOffTold','1') }catch(e){}
+      setTimeout(show,2200);
+    }
+  }
+})();
+
+/* ---- go ---- */
+applyHeroMode();
+if(reduced.matches) pinToFinalStates();
+
+})();
+</script>
+</body>
+</html>

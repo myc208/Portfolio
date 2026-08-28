@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Site check</title>
+<style>
+:root{--ok:#4ADE80;--bad:#FF4F3F;--warn:#FFC24A;--line:#232B3D;--dim:#93A0B6}
+*{box-sizing:border-box}
+body{margin:0;background:#0A0D13;color:#E9EDF4;font:15px/1.6 ui-sans-serif,system-ui,sans-serif;padding:32px 20px 80px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:1.6rem;margin:0 0 6px}
+.lede{color:var(--dim);margin:0 0 28px}
+.row{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:7px;background:var(--dim)}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}.dot.warn{background:var(--warn)}
+.k{flex:none;width:210px;font-weight:600}
+.v{color:var(--dim);word-break:break-word}
+.v b{color:#E9EDF4;font-weight:600}
+#verdict{margin:26px 0 8px;padding:18px 20px;border:1px solid var(--line);border-radius:4px;background:#131826}
+#verdict h2{margin:0 0 8px;font-size:1.05rem}
+#verdict p{margin:0;color:var(--dim)}
+#copy{margin-top:22px;padding:13px 20px;background:#FF4F3F;color:#0A0D13;border:0;border-radius:3px;
+  font:600 13px/1 ui-sans-serif,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+pre{margin-top:18px;padding:16px;background:#0D1119;border:1px solid var(--line);border-radius:4px;
+  color:var(--dim);font-size:12px;white-space:pre-wrap;word-break:break-word}
+a{color:#FF4F3F}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Site check</h1>
+<p class="lede">This page asks your browser what it is actually doing, so we can stop guessing about the hero video. Nothing here is sent anywhere. Press the button at the bottom and paste the result to me.</p>
+<div id="rows"></div>
+
+<div id="verdict"><h2>Working it out...</h2><p>Give it a couple of seconds.</p></div>
+<button id="copy">Copy the result</button>
+<pre id="out">running...</pre>
+</div>
+
+<script>
+(function(){
+  var rows=document.getElementById('rows'), lines=[];
+  function add(state,k,v){
+    lines.push(k+': '+v);
+    var r=document.createElement('div'); r.className='row';
+    r.innerHTML='<span class="dot '+state+'"></span><span class="k">'+k+'</span><span class="v">'+v+'</span>';
+    rows.appendChild(r);
+  }
+
+  var GATES=[
+    ['(max-width: 720px)','the window is narrower than 720px'],
+    ['(orientation: portrait) and (max-width: 1024px)','the window is portrait and under 1024px'],
+    ['(orientation: portrait) and (pointer: coarse)','portrait on a touch device'],
+    ['(orientation: landscape) and (pointer: coarse) and (max-height: 560px)','a phone held sideways'],
+    ['(prefers-reduced-motion: reduce)','your computer is set to reduce motion']
+  ];
+  var tripped=GATES.filter(function(g){return matchMedia(g[0]).matches});
+
+  add('ok','Window size', innerWidth+' x '+innerHeight+' css pixels');
+  add('ok','Screen', screen.width+' x '+screen.height+', ratio '+(devicePixelRatio||1));
+  add(tripped.length?'warn':'ok','Reduce motion setting',
+      matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? '<b>ON</b>. This turns the scrolling video off by design.' : 'off');
+  add('ok','Pointer', matchMedia('(pointer: fine)').matches ? 'mouse or trackpad' :
+      matchMedia('(pointer: coarse)').matches ? 'touch' : 'unknown');
+  add(location.protocol==='file:'?'bad':'ok','How you opened it',
+      location.protocol==='file:'
+        ? '<b>Double-clicked the file.</b> Browsers block video loading this way, so you always get the still image.'
+        : 'through a web address ('+location.protocol+')');
+  add(tripped.length?'warn':'ok','Hero mode right now',
+      tripped.length ? '<b>Still image</b>, because '+tripped[0][1]
+                     : '<b>Scrolling video</b>');
+
+  var v=document.createElement('video');
+  add(v.canPlayType('video/mp4; codecs="avc1.42E01E"')?'ok':'bad','MP4 support',
+      v.canPlayType('video/mp4; codecs="avc1.42E01E"')||'none');
+
+  var gl=null; try{ gl=document.createElement('canvas').getContext('webgl'); }catch(e){}
+  add(gl?'ok':'warn','WebGL (background lattice)', gl?'available':'not available, the drawn grid is used instead');
+
+  document.getElementById('out').textContent='fetching the video...';
+
+  var t0=performance.now();
+  fetch('assets/hero-scrub.mp4').then(function(res){
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    return res.blob();
+  }).then(function(blob){
+    var ms=Math.round(performance.now()-t0);
+    add('ok','Video download', (blob.size/1048576).toFixed(2)+' MB in '+ms+' ms');
+    var el=document.createElement('video');
+    el.muted=true; el.playsInline=true; el.preload='auto';
+    el.src=URL.createObjectURL(blob);
+    var done=false;
+    el.addEventListener('loadedmetadata',function(){
+      add('ok','Video opened', el.videoWidth+' x '+el.videoHeight+', '+el.duration.toFixed(1)+' seconds');
+      // the real question: can this browser seek it, which is what scrubbing needs
+      var target=el.duration*0.6, t1=performance.now();
+      el.addEventListener('seeked',function(){
+        if(done) return; done=true;
+        var d=Math.abs(el.currentTime-target);
+        add(d<0.4?'ok':'bad','Seeking (what scrubbing needs)',
+          d<0.4 ? 'works. Asked for '+target.toFixed(2)+'s, landed on '+el.currentTime.toFixed(2)+'s in '+Math.round(performance.now()-t1)+' ms'
+                : '<b>failed.</b> Asked for '+target.toFixed(2)+'s but landed on '+el.currentTime.toFixed(2)+'s');
+        finish();
+      },{once:true});
+      el.currentTime=target;
+      setTimeout(function(){ if(!done){ done=true;
+        add('bad','Seeking (what scrubbing needs)','<b>timed out.</b> The browser never finished seeking.');
+        finish(); } },6000);
+    });
+    el.addEventListener('error',function(){
+      add('bad','Video opened','<b>failed.</b> The browser could not decode the file.'); finish();
+    });
+  }).catch(function(err){
+    add('bad','Video download','<b>failed.</b> '+err.message+
+      (location.protocol==='file:' ? ' This is expected when the file is double-clicked.' : ''));
+    finish();
+  });
+
+  function finish(){
+    var vb=document.getElementById('verdict'), h, p;
+    if(location.protocol==='file:'){
+      h='You are opening the file directly.';
+      p='Browsers block video loading from a double-clicked file, so you get the still image every time. Open it through the localhost address instead and the scrolling video appears.';
+    } else if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+      h='Your computer is set to reduce motion.';
+      p='The site respects that and shows a still hero instead of the scrolling video, on purpose. In Windows: Settings, Accessibility, Visual effects, then turn Animation effects on. Refresh and the video appears.';
+    } else if(tripped.length){
+      h='Your window is triggering the still-image hero.';
+      p='Reason: '+tripped[0][1]+'. Widen the window past 1024px and refresh.';
+    } else {
+      h='Your browser should be showing the scrolling video.';
+      p='If the numbers above are all green, the video is loading and seeking correctly. Remember it does not play by itself: it moves only as you scroll, forward and backward, like a scrubber.';
+    }
+    vb.innerHTML='<h2>'+h+'</h2><p>'+p+'</p>';
+    document.getElementById('out').textContent=
+      lines.join('\n')+'\nUser agent: '+navigator.userAgent+'\nAddress: '+location.href;
+  }
+
+  document.getElementById('copy').addEventListener('click',function(){
+    var t=document.getElementById('out').textContent;
+    navigator.clipboard.writeText(t).then(function(){
+      document.getElementById('copy').textContent='Copied. Paste it to me.';
+    },function(){
+      var r=document.createRange(); r.selectNodeContents(document.getElementById('out'));
+      getSelection().removeAllRanges(); getSelection().addRange(r);
+      document.getElementById('copy').textContent='Selected. Press Ctrl+C.';
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# keep line endings sane across machines
+* text=auto eol=lf
+*.mp4 binary
+*.jpg binary
+*.png binary
+*.webp binary
+*.pdf binary
